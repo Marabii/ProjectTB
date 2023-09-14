@@ -1,0 +1,16 @@
+body {
+    font-family: 'Open Sans', sans-serif;
+}
+
+a {
+    /*
+        Getting rid of default formatting for <a> elements. `inherits` tells that
+        `a` elements should use the value set on its parent for these properties.
+    */
+    text-decoration: inherit;
+    color: inherit;
+}
+
+body {
+    background-color: yellow;
+}
