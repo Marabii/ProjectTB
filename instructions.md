@@ -45,7 +45,7 @@ The goal is to produce 2 HTML documents, one for each web page, and 1 SCSS docu
 
 ### Getting the webpage running 
 
-- You need to run a small web server, use the script `./run.sh` at the root of the repository. It uses 
+- You need to run a small web server, use the script `./run_server.py` at the root of the repository. It uses 
   python 3, make sure you have python 3 installed on you machine as it's a prerequisite for this course.
 - Access your webpage with the URLs http://localhost:8000/integration/about.html and http://localhost:8000/integration/login.html 
 
