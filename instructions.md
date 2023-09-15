@@ -119,6 +119,24 @@ The login form must send a `POST` request to the url `/register`, with the follo
 - `username=admin@domain.com`
 - `password=rainbow`
 
+### Login Form validation UX Feedback
+
+You have 2 additional mockup files `login_mockup_input_focus.png` and `login_mockup_input_invalid.png`
+that show you the look of user feedback when focusing the fields.
+
+Conditions for fields to be valid :
+
+- Both fields are required. An empty field is invalid.
+- The email field should have a value which is a valid email address format. If it has another value,
+  it is invalid.
+
+UX feedback :
+- When the field are not in focus, they have a gray border
+- When a field is in focus, and has an invalid value, it has a red border
+- When a field is in focus, and has a valid value, it has a green border
+
+You should not be able to submit the form if the values are invalid.
+
 ### Additionnal info
 
 - The "buttons" at the top are links. Set the `href` attribute to any URL, even invalid, if the link is
