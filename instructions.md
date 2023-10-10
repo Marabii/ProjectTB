@@ -4,9 +4,9 @@ Autumn 2023.
 
 ## Planning
 
-- 15/09/2022 : Lesson 1 (Basic HTML+CSS) + Lesson 2 (HTML forms, CSS preprocessors)
+- 15/09/2023 : Lesson 1 (Basic HTML+CSS) + Lesson 2 (HTML forms, CSS preprocessors)
 
-Assignment : "TP 3 HTML Basic + Forms + SCSS" (this one)
+Assignment : "TP 3 HTML Basic + Forms + SCSS" (this one)
 
 The assignment is to be submitted for Saturday 14/10/2023 in the evening.
 
@@ -31,7 +31,7 @@ Alternatively you can send it to me via email :
 
 ## Instructions
 
-You have to integrate (code the HTML and SCSS code) 2 web pages, based on a provided mockup.
+You have to integrate (write the HTML and SCSS code) 2 web pages, based on a provided mockup.
 
 The two pages are :
 
@@ -40,7 +40,7 @@ The two pages are :
 
 In order to do so, you will start with the template that is provided to you in the directory `integration`.
 
-The goal is to produce 2 HTML documents, one for each web page, and 1 SCSS document for the global stylesheet of your website.
+The goal is to produce 2 HTML documents, one for each web page, and 1 SCSS document for the global stylesheet of your website.
 
 
 ### Getting the webpage running 
@@ -82,7 +82,7 @@ Write your code following the best practices I showed you in the demo example, i
 ### SCSS to CSS
 
 I'm asking you to write SCSS code, but you need to transpile it to CSS for the website to work. For this you
-need to have `node`, `npm` and `sass` installed (prerequisite for this course, described in the slides https://emse1.gitlab.io/cours-dev-web-2/3_CSS_Preprocessor/presentation.html#5)
+need to have `node`, `npm` and `sass` installed (prerequisite for this course, described in the slides https://emse1.gitlab.io/cours-dev-web-2/3_CSS_Preprocessor/presentation.html#7)
 
 You can run the script `./compile_css.sh` when you start working on your project. This script will run in 
 the background, watch for changes in the file `integration/style.scss` and transpile automatically to 
