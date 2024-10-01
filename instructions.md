@@ -4,30 +4,18 @@ Autumn 2023.
 
 ## Planning
 
-- 15/09/2023 : Lesson 1 (Basic HTML+CSS) + Lesson 2 (HTML forms, CSS preprocessors)
+- 04/10/2024 : Lesson 1 (Basic HTML+CSS) + Lesson 2 (HTML forms, CSS preprocessors)
 
-Assignment : "TP 3 HTML Basic + Forms + SCSS" (this one)
+Assignment : "TP Basic HTML + Forms + SCSS" (this one)
 
-The assignment is to be submitted for Saturday 14/10/2023 in the evening.
+The assignment is to be submitted for Monday 21/10/2024 in the evening.
 
 ## Submission procedure
 
-You can either send me your assignment via gitlab : 
+- Submit your assignment on the eCampus platform : https://ecampus.emse.fr/mod/assign/view.php?id=29838
+- Compress your projet directory into an archive format (ZIP, 7z, tar, ...) and upload a single file
+- Due to the number of students in the lecture, you have to work in groups of 2 or 3 persons
 
-- Make a new gitlab project on your favorite gitlab instance
-- If you are git-savvy enough, replace the remote of the repository
-with your own remote
-- Otherwise, remove the `.git` folder, and initialize a new git repository
-in the assignment directory, then put it online like you would do with a new
-project
-- Plase make your repository public, in order to avoid access issues
-- Send me the link, I will take the last commit before the deadline date, or a specific
-commit if you tell me which one.
-
-
-Alternatively you can send it to me via email :
-- ZIP your project directory
-- Send it to qrichaud.pro@gmail.com
 
 ## Instructions
 
@@ -47,6 +35,7 @@ The goal is to produce 2 HTML documents, one for each web page, and 1 SCSS docum
 
 - You need to run a small web server, use the script `./run_server.py` at the root of the repository. It uses 
   python 3, make sure you have python 3 installed on you machine as it's a prerequisite for this course.
+- Run the `./compile_css.sh` script to transform the SCSS source into CSS
 - Access your webpage with the URLs http://localhost:8000/integration/about.html and http://localhost:8000/integration/login.html 
 
 
@@ -96,7 +85,7 @@ I setup the `.gitignore` file so that you can't commit
 the CSS file `output.css`. That's because the CSS is a product of the compilation chain. If your 
 SCSS source is correct, the CSS will be recompiled by users checking out the repository.
 
-#### Tip for refresing the browser cache
+#### Tip for refreshing the browser cache
 
 Sometimes it can happen that you edit your stylesheets, but after refreshing the webpage in your browser
 you don't see the changes. That's because your browser keeps the stylesheet in cache, and won't always
