@@ -1,12 +1,204 @@
 body {
-    font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
+  width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 a {
-    /*
+  /*
         Getting rid of default formatting for <a> elements. `inherits` tells that
         `a` elements should use the value set on its parent for these properties.
     */
-    text-decoration: inherit;
-    color: inherit;
+  text-decoration: inherit;
+  color: inherit;
+}
+
+header {
+  font-size: 14px;
+  font-weight: 600;
+  background-color: white;
+  width: 100vw;
+  > div {
+    margin: auto;
+    height: 75px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1070px;
+    padding: 0 10px;
+    div {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+      img {
+        width: 180px;
+      }
+      ul {
+        display: flex;
+        list-style: none;
+        gap: 20px;
+        align-items: center;
+        li {
+          padding: 10px 15px;
+        }
+        li:hover {
+          background-color: #ebebeb;
+          border-radius: 50px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+
+  button {
+    all: unset;
+    background-color: #72ac51;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #47752d;
+  }
+}
+
+.active-link {
+  background-color: #ebebeb;
+  padding: 10px 15px;
+  border-radius: 50px;
+}
+
+.active-nav {
+  color: white;
+  background-color: #72ac51 !important;
+}
+
+#about-main {
+  width: 100%;
+  height: 100vh;
+  background-color: #ebebeb;
+  > div {
+    display: flex;
+    gap: 20px;
+    max-width: 1070px;
+    margin: 0 auto;
+    padding-top: 20px;
+    h1,
+    h2,
+    h3 {
+      width: fit-content;
+    }
+    #nav {
+      width: 25%;
+      h2 {
+        width: 100%;
+        font-size: 18px;
+        padding: 20px;
+        border: 1px solid #ebebeb;
+        background-color: white;
+        cursor: pointer;
+      }
+
+      h2:hover {
+        background-color: #72ac51;
+        color: white;
+      }
+    }
+    #about {
+      width: 75%;
+      padding-right: 20px;
+      width: fit-content;
+      > div {
+        display: flex;
+        justify-content: space-between;
+        width: fit-content;
+        gap: 20px;
+        div {
+          background-color: white;
+          width: 100%;
+          h3 {
+            font-size: 20px;
+            font-weight: 600;
+            padding: 30px 0 0 30px;
+          }
+
+          p {
+            padding: 30px;
+            font-size: 15px;
+            font-weight: 400;
+          }
+
+          img {
+            position: relative;
+            top: 5px;
+          }
+        }
+      }
+
+      h1 {
+        font-size: 36px;
+        color: #565656;
+        font-weight: 400;
+        margin-left: 15px;
+      }
+    }
+  }
+}
+
+#login-main {
+  width: 100%;
+  height: 100vh;
+  background-color: #ebebeb;
+  padding-top: 20px;
+  form {
+    background-color: white;
+    width: 570px;
+    margin: 0 auto;
+    padding: 67px 0 60px 60px;
+
+    h1 {
+      font-size: 32px;
+      font-weight: 100;
+    }
+
+    input {
+      height: 45px;
+      padding: 10px;
+      width: 450px;
+      margin-bottom: 25px;
+      border: 1px solid #ebebeb;
+      outline: 1px solid grey;
+    }
+
+    input:focus:valid {
+      outline: 2px solid #47752d;
+    }
+
+    input:focus:invalid {
+      outline: 2px solid red;
+    }
+
+    button {
+      display: block;
+      width: 450px;
+      padding: 10px;
+      border-radius: 50px;
+      background-color: #72ac51;
+      color: white;
+      text-align: center;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #47752d;
+    }
+  }
 }

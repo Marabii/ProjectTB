@@ -1,17 +1,63 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Musicca - About</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">     
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"
+      rel="stylesheet"
+    />
     <link href="assets/stylesheets/output.css" rel="stylesheet" />
   </head>
 
   <body>
-    <p>Example of image integration :</p>
-    <img src="./assets/img/company.jpg">
+    <header>
+      <div>
+        <div>
+          <img src="./assets/img/musicca-logo.png" alt="musicca logo" />
+          <ul>
+            <li>Exercises</li>
+            <li>Lessons</li>
+            <li class="active-link">About</li>
+          </ul>
+        </div>
+        <div>
+          <button>Create account</button>
+          <button>
+            <a href="http://localhost:8000/integration/login.html">Log in</a>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="about-main">
+      <div>
+        <div id="nav">
+          <h2 class="active-nav">About</h2>
+          <h2>Musicca</h2>
+          <h2>Support</h2>
+        </div>
+        <div id="about">
+          <h1>About Musicca</h1>
+          <div>
+            <div>
+              <h3>Company</h3>
+              <p>Get to know us and meet the people behind Musicca</p>
+              <img src="./assets/img/company.jpg" alt="company photo" />
+            </div>
+            <div>
+              <h3>Mission</h3>
+              <p>Read our mission statement and learn more about our goals</p>
+              <img src="./assets/img/mission.jpg" alt="mission photo" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </body>
 </html>
