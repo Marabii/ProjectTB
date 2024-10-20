@@ -38,5 +38,4 @@ public class SensorEntity implements Serializable {
         this.sensorType = sensorType;
     }
 
-    // Getters and Setters...
 }

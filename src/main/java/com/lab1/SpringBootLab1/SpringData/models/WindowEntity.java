@@ -1,6 +1,7 @@
 package com.lab1.SpringBootLab1.SpringData.models;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,11 +26,13 @@ public class WindowEntity {
     private SensorEntity windowStatus;
 
     @ManyToOne
+    @JsonBackReference
     private RoomEntity room;
 
-    public WindowEntity(String name, SensorEntity sensor) {
-        this.windowStatus = sensor;
+    public WindowEntity(String name, SensorEntity windowStatus, RoomEntity roomEntity) {
         this.name = name;
+        this.windowStatus = windowStatus;
+        this.room = roomEntity;
     }
 
 }

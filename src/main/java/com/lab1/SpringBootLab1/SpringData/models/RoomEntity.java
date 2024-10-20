@@ -1,5 +1,6 @@
 package com.lab1.SpringBootLab1.SpringData.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"windows"})
+@ToString(exclude = {"windows", "currentTemperature"})
 public class RoomEntity {
     @Id
     @GeneratedValue
@@ -29,17 +30,18 @@ public class RoomEntity {
     @OneToOne
     private SensorEntity currentTemperature;
 
-    private Double targetTemperature;
+    @OneToOne
+    private SensorEntity targetTemperature;
 
     @OneToMany(mappedBy="room")
+    @JsonManagedReference
     private List<WindowEntity> windows;
 
-    @OneToMany(mappedBy = "room")
-    private List<HeaterEntity> heaters;
-
-    public RoomEntity(int floor, String name) {
+    public RoomEntity(String name, SensorEntity currentTemperature, SensorEntity targetTemperature, int floor) {
         this.floor = floor;
         this.name = name;
+        this.currentTemperature = currentTemperature;
+        this.targetTemperature = targetTemperature;
     }
 
 }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @DataJpaTest //
-class WindowDaoTest {
+public class WindowDaoTest {
     @Autowired //
     private WindowDao windowDao;
 

@@ -19,7 +19,6 @@ class SpringBootLab1ApplicationTests {
 	@Autowired
 	private ConsoleGreetingService greetingService;
 
-
 	@Autowired
 	private DummyUserService dummyUserService;
 
