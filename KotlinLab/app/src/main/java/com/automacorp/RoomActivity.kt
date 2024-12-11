@@ -32,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.automacorp.model.RoomDto
 import com.automacorp.model.RoomViewModel
-import com.automacorp.service.RoomService
 import com.automacorp.ui.theme.AutomacorpTheme
 import kotlin.math.round
 
@@ -59,12 +58,12 @@ class RoomActivity : ComponentActivity() {
         val param = intent.getStringExtra(MainActivity.ROOM_PARAM)
 
         val model: RoomViewModel by viewModels()
-        model.room = RoomService.findByNameOrId(param)
+        model.findByNameOrId(param ?: "")
 
         val onRoomSave: () -> Unit = {
             if (model.room != null) {
                 val roomDto: RoomDto = model.room as RoomDto
-                RoomService.updateRoom(roomDto.id, roomDto)
+                model.updateRoom(roomDto.id, roomDto)
                 Toast.makeText(baseContext, "Room ${roomDto.name} was updated", Toast.LENGTH_LONG)
                     .show()
                 startActivity(Intent(baseContext, MainActivity::class.java))
@@ -104,7 +103,7 @@ fun RoomDetail(model: RoomViewModel, modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { newName ->
                 localRoom = localRoom?.copy(name = newName)
-                localRoom?.let { model.updateRoom(it) }
+                localRoom?.let { model.updateRoom(localRoom!!.id, it) }
             },
             placeholder = { Text(stringResource(R.string.act_room_name)) },
         )
@@ -119,7 +118,7 @@ fun RoomDetail(model: RoomViewModel, modifier: Modifier = Modifier) {
             value = model.room?.targetTemperature?.toFloat() ?: 18.0f,
             onValueChange = { newTemp ->
                 localRoom = localRoom?.copy(targetTemperature = newTemp.toDouble())
-                localRoom?.let { model.updateRoom(it) }
+                localRoom?.let { model.updateRoom(localRoom!!.id, it) }
             },
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.secondary,

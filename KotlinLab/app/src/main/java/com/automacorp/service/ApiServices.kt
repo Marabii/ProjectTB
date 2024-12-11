@@ -27,6 +27,19 @@ class ApiServices {
                 .create(RoomsApiService::class.java)
         }
 
+        val windowsApiService: WindowsApiService by lazy {
+            val client = getUnsafeOkHttpClient()
+                .addInterceptor(BasicAuthInterceptor(API_USERNAME, API_PASSWORD))
+                .build()
+
+            Retrofit.Builder()
+                .addConverterFactory(MoshiConverterFactory.create())
+                .client(client)
+                .baseUrl("https://automacorp.devmind.cleverapps.io/api/")
+                .build()
+                .create(WindowsApiService::class.java)
+        }
+
         private fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
             return try {
                 // Create a trust manager that does not validate certificate chains

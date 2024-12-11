@@ -1,3 +1,4 @@
+// RoomListActivity.kt
 package com.automacorp
 
 import android.content.Intent
@@ -30,11 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.automacorp.model.RoomDto
 import com.automacorp.model.RoomViewModel
-import com.automacorp.service.RoomService
 import com.automacorp.ui.theme.AutomacorpTheme
 import com.automacorp.ui.theme.PurpleGrey80
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,20 +55,26 @@ class RoomListActivity : ComponentActivity() {
             startActivity(Intent(baseContext, MainActivity::class.java))
         }
 
+
         setContent {
-            val roomsState by viewModel.roomsState.asStateFlow().collectAsState() // (1)
+            // Fetch all rooms when the activity is created
+            LaunchedEffect(Unit) {
+                viewModel.findAll()
+            }
+
+            val roomsState by viewModel.roomsState.asStateFlow().collectAsState()
             LaunchedEffect(Unit) { // (2)
                 viewModel.findAll()
             }
             if (roomsState.error != null) {
                 setContent {
-                    RoomList(emptyList(), navigateBack, openRoom)
+                    RoomList(emptyList(), navigateBack, openRoom, viewModel)
                 }
                 Toast
                     .makeText(applicationContext, "Error on rooms loading ${roomsState.error}", Toast.LENGTH_LONG)
                     .show() // (3)
             } else {
-                RoomList(roomsState.rooms, navigateBack, openRoom) // (4)
+                RoomList(roomsState.rooms, navigateBack, openRoom, viewModel) // (4)
             }
         }
     }
@@ -106,27 +111,11 @@ fun RoomItem(room: RoomDto, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun RoomListOld(modifier: Modifier, openRoom: (roomId: Long) -> Unit) {
-    LazyColumn(
-        contentPadding = PaddingValues(4.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier,
-    ) {
-        val rooms = RoomService.findAll()
-        items(rooms.size, key = { it }) {
-            RoomItem(
-                room = rooms[it],
-                modifier = Modifier.clickable { openRoom(it.toLong()) }
-            )
-        }
-    }
-}
-
-@Composable
 fun RoomList(
     rooms: List<RoomDto>,
     navigateBack: () -> Unit,
-    openRoom: (id: Long) -> Unit
+    openRoom: (id: Long) -> Unit,
+    model: RoomViewModel
 ) {
     AutomacorpTheme {
         Scaffold(
@@ -152,13 +141,5 @@ fun RoomList(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = false)
-@Composable
-fun RoomItemPreview() {
-    AutomacorpTheme {
-        RoomItem(RoomService.findAll()[0])
     }
 }

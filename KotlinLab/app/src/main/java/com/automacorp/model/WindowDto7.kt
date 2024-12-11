@@ -9,3 +9,9 @@ data class WindowDto(
     val roomId: Long,
     val windowStatus: WindowStatus
 )
+data class WindowCommandDto(
+    val name: String,
+    val roomId: Long,
+    val windowStatus: WindowStatus,
+    val id: Long,
+)
