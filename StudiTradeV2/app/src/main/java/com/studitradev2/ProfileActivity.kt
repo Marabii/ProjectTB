@@ -46,11 +46,30 @@ class ProfileActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences) {
+    // Charger les données sauvegardées au démarrage
     var name by remember { mutableStateOf(sharedPreferences.getString("name", "Lucas Chateau") ?: "") }
-    var university by remember { mutableStateOf(sharedPreferences.getString("university", "EMSE") ?: "") }
-    var studyProgram by remember { mutableStateOf(sharedPreferences.getString("studyProgram", "Business Administration") ?: "") }
-    var yearOfStudy by remember { mutableStateOf(sharedPreferences.getString("yearOfStudy", "2nd Year") ?: "") }
+    var universityIndex by remember {
+        mutableIntStateOf(
+            sharedPreferences.getInt("universityIndex", 0) // Charge l'index sauvegardé (par défaut 0)
+        )
+    }
+    var studyProgramIndex by remember {
+        mutableIntStateOf(
+            sharedPreferences.getInt("studyProgramIndex", 0) // Charge l'index sauvegardé (par défaut 0)
+        )
+    }
+    var yearOfStudyIndex by remember {
+        mutableIntStateOf(
+            sharedPreferences.getInt("yearOfStudyIndex", 0) // Charge l'index sauvegardé (par défaut 0)
+        )
+    }
 
+    // Listes des options
+    val universities = listOf("EMSE", "HEC Paris", "INSEAD")
+    val studyPrograms = listOf("Business Administration", "Engineering", "Computer Science")
+    val yearsOfStudy = listOf("1st Year", "2nd Year", "3rd Year", "4th Year")
+
+    // Snackbar pour afficher un message de confirmation
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -95,39 +114,38 @@ fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences)
                 // Dropdown pour Université
                 CustomDropdownMenu(
                     label = "University",
-                    selectedOption = university,
-                    options = listOf("EMSE", "HEC Paris", "INSEAD")
-                ) { selected ->
-                    university = selected
-                }
+                    options = universities,
+                    selectedIndex = universityIndex,
+                    onItemSelected = { universityIndex = it }
+                )
 
                 // Dropdown pour Domaine d'étude
                 CustomDropdownMenu(
                     label = "Study Program",
-                    selectedOption = studyProgram,
-                    options = listOf("Business Administration", "Engineering", "Computer Science")
-                ) { selected ->
-                    studyProgram = selected
-                }
+                    options = studyPrograms,
+                    selectedIndex = studyProgramIndex,
+                    onItemSelected = { studyProgramIndex = it }
+                )
 
                 // Dropdown pour Année d'étude
                 CustomDropdownMenu(
                     label = "Year of Study",
-                    selectedOption = yearOfStudy,
-                    options = listOf("1st Year", "2nd Year", "3rd Year", "4th Year")
-                ) { selected ->
-                    yearOfStudy = selected
-                }
+                    options = yearsOfStudy,
+                    selectedIndex = yearOfStudyIndex,
+                    onItemSelected = { yearOfStudyIndex = it }
+                )
             }
 
             FloatingActionButton(
                 onClick = {
+                    // Sauvegarder les données dans les SharedPreferences
                     sharedPreferences.edit {
                         putString("name", name)
-                        putString("university", university)
-                        putString("studyProgram", studyProgram)
-                        putString("yearOfStudy", yearOfStudy)
+                        putInt("universityIndex", universityIndex)
+                        putInt("studyProgramIndex", studyProgramIndex)
+                        putInt("yearOfStudyIndex", yearOfStudyIndex)
                     }
+                    // Afficher une confirmation
                     scope.launch {
                         snackbarHostState.showSnackbar("Modifications saved successfully")
                     }
@@ -141,18 +159,16 @@ fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences)
     }
 }
 
-
 @Composable
 fun CustomDropdownMenu(
     label: String,
-    selectedOption: String,
     options: List<String>,
-    onOptionSelected: (String) -> Unit
+    selectedIndex: Int,
+    onItemSelected: (Int) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) } // Gérer l'état du menu déroulant
+    var isDropDownExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        // Affiche le label
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
@@ -160,35 +176,34 @@ fun CustomDropdownMenu(
             modifier = Modifier.padding(bottom = 4.dp)
         )
 
-        // Conteneur pour le champ sélectionné et le menu
         Box {
-            // Champ affichant l'option sélectionnée
-            OutlinedTextField(
-                value = selectedOption,
-                onValueChange = {}, // Pas de saisie manuelle
-                readOnly = true, // Empêche la saisie
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = true }, // Ouvre le menu déroulant
-                trailingIcon = { // Icône pour le menu déroulant
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = null
-                    )
-                }
-            )
-
-            // Menu déroulant
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false } // Ferme le menu si on clique ailleurs
+                    .clickable { isDropDownExpanded = true }
             ) {
-                options.forEach { option ->
+                Text(
+                    text = options[selectedIndex],
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Dropdown Icon"
+                )
+            }
+
+            DropdownMenu(
+                expanded = isDropDownExpanded,
+                onDismissRequest = { isDropDownExpanded = false }
+            ) {
+                options.forEachIndexed { index, option ->
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            onOptionSelected(option) // Met à jour l'option sélectionnée
-                            expanded = false // Ferme le menu après sélection
+                            isDropDownExpanded = false
+                            onItemSelected(index)
                         }
                     )
                 }
@@ -196,7 +211,6 @@ fun CustomDropdownMenu(
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
