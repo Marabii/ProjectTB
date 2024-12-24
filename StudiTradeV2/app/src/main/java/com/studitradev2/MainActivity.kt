@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.studitradev2.ui.components.BottomBar
 import com.studitradev2.ui.theme.StudiTradeV2Theme
 
 class MainActivity : ComponentActivity() {

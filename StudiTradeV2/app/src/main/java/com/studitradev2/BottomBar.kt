@@ -1,4 +1,4 @@
-package com.studitradev2.ui.components
+package com.studitradev2
 
 import android.content.Context
 import android.content.Intent
@@ -10,11 +10,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.studitradev2.FavoritesActivity
-import com.studitradev2.MainActivity
-import com.studitradev2.PurshasedActivity
-import com.studitradev2.R
-import com.studitradev2.SellActivity
 
 @Composable
 fun BottomBar(
@@ -68,8 +63,8 @@ fun BottomBar(
             },
             selected = false,
             onClick = {
-                // Naviguer vers PurshasedActivity
-                val intent = Intent(context, PurshasedActivity::class.java)
+                // Naviguer vers PurchasedActivity
+                val intent = Intent(context, PurchasedActivity::class.java)
                 context.startActivity(intent)
             }
         )

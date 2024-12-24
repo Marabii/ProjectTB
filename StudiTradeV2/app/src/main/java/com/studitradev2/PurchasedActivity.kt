@@ -12,17 +12,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.studitradev2.ui.theme.StudiTradeV2Theme
 
-class FavoritesActivity : ComponentActivity() {
+class PurchasedActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             StudiTradeV2Theme {
-                FavoritesScreen(onBackClick = { finish() })
+                PurchasedScreen(onBackClick = { finish() })
             }
         }
     }
@@ -30,16 +30,17 @@ class FavoritesActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen(onBackClick: () -> Unit) {
+fun PurchasedScreen(onBackClick: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "My Favorites",
+                        text = "Purchased Documents",
                         color = Color.White,
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 },
                 navigationIcon = {
@@ -63,19 +64,13 @@ fun FavoritesScreen(onBackClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Placez ici un contenu temporaire ou laissez l'espace vide pour le moment.
             Text(
-                text = "You have no favorite items yet.",
-                fontSize = 18.sp,
-                color = Color.Gray
+                text = "Purchased documents will be displayed here.",
+                color = Color.Gray,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun FavoritesScreenPreview() {
-    StudiTradeV2Theme {
-        FavoritesScreen(onBackClick = {})
     }
 }
