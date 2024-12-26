@@ -30,7 +30,6 @@ const isHeartFilled = ref<boolean>(false)
 // Function to toggle heart state
 const toggleHeart = () => {
   isHeartFilled.value = !isHeartFilled.value
-  console.log(`Heart is now ${isHeartFilled.value ? 'filled' : 'unfilled'}`)
 }
 
 // Handle document preview
@@ -102,7 +101,7 @@ const closePreview = () => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -110,5 +109,8 @@ const closePreview = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.hiddenCanvasElement {
+  display: none !important;
 }
 </style>

@@ -12,9 +12,11 @@ export interface NoteDTO {
   id: number
   owner: UserDTO
   title: string
-  price: number
   description: string
+  price: number
   files: NoteFileDTO[]
   demoFile: NoteFileDTO
   authorizedUsers: UserDTO[]
+  isDigital: boolean
+  isAvailable: boolean
 }

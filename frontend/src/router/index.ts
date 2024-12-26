@@ -5,6 +5,9 @@ import SellFiles from '@/views/SellFiles.vue'
 import AuthPage from '@/views/AuthPage.vue'
 import axios from 'axios'
 import { serverURL } from '@/utilis/constants'
+import PersonalNotes from '@/views/PersonalNotes.vue'
+import SuccessfulPayment from '@/views/SuccessfulPayment.vue'
+import FailedPayment from '@/views/FailedPayment.vue'
 
 const routes = [
   {
@@ -22,6 +25,22 @@ const routes = [
     path: '/auth-page',
     name: 'Authentication page',
     component: AuthPage,
+  },
+  {
+    path: '/successful-payment',
+    name: 'Successful payment page',
+    component: SuccessfulPayment,
+  },
+  {
+    path: '/failed-payment',
+    name: 'Failed payment page',
+    component: FailedPayment,
+  },
+  {
+    path: '/personal-notes',
+    name: 'Personal notes',
+    component: PersonalNotes,
+    meta: { requiresAuth: true },
   },
 ]
 

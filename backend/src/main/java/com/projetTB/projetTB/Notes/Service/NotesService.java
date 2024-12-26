@@ -7,6 +7,8 @@ import com.projetTB.projetTB.Notes.DTOs.NoteFileDTO;
 import com.projetTB.projetTB.Notes.Repository.NoteRepository;
 import com.projetTB.projetTB.Notes.models.Note;
 import com.projetTB.projetTB.Notes.models.NoteFile;
+import com.projetTB.projetTB.Payments.CreatePaymentLink.Service.EmailService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class NotesService {
     private final CDNService cdnService;
     private final NoteRepository noteRepository;
     private final UsersRepository userRepository;
+    private final EmailService emailService;
 
     @Value("${gcp.bucket.name}")
     private String bucketName;
@@ -39,14 +42,15 @@ public class NotesService {
      */
     @Transactional(rollbackOn = Exception.class)
     public NoteDTO uploadNoteFiles(MultipartFile[] files, MultipartFile demoFile, String ownerEmail, String title,
-            String description, Double price) throws IOException {
+            String description, Double price, boolean isDigital) throws IOException {
 
         // 1) Check if the user exists
         Users owner = userRepository.findByEmail(ownerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + ownerEmail));
 
         // 2) Create a new note (unsaved) and persist it to get the note ID
-        Note note = Note.builder().owner(owner).title(title).description(description).price(price).build();
+        Note note = Note.builder().owner(owner).title(title).description(description).price(price).isDigital(isDigital)
+                .isAvailable(isDigital).build();
 
         // Save the note to generate an ID so we can use it for naming folders in GCS
         noteRepository.save(note);
@@ -55,7 +59,7 @@ public class NotesService {
         List<NoteFile> noteFiles = new ArrayList<>();
 
         // 4) Process "regular" files (private by default)
-        if (files != null) {
+        if (files != null && isDigital) {
             for (MultipartFile file : files) {
                 if (file != null && !file.isEmpty()) {
                     // Upload to GCS, build a NoteFile instance (not saved individually)
@@ -136,7 +140,11 @@ public class NotesService {
             try {
                 cdnService.grantAccessToFile(noteId, fileName, emailAddress);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+                try {
+                    emailService.sendEmailFailureNotification(note, emailAddress);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
                 e.printStackTrace();
             }
 
@@ -149,11 +157,60 @@ public class NotesService {
         }
     }
 
+    public void depositDocuments(Long noteId) {
+        if (noteRepository.existsByIsDigitalFalseAndIsAvailableTrue())
+            throw new IllegalStateException(
+                    "there are already documents deposited in the box, wait until it's available");
+
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new IllegalArgumentException("Note not found with id: " + noteId));
+
+        note.setAvailable(true);
+        noteRepository.save(note);
+    }
+
+    // Must be changed, big security problem (it's there just for debugging
+    // purposes)
+    public void takeDocuments(String secretCode) {
+        System.out.println("the input password is: " + secretCode);
+        // Fetch notes from the repository
+        List<Note> notes = noteRepository.findByIsDigitalFalseAndIsAvailableTrue();
+
+        // Check if there are multiple or no notes
+        if (notes.size() > 1)
+            throw new RuntimeException("Something went wrong");
+        if (notes.size() == 0)
+            throw new RuntimeException("There are no available notes in the box at the moment");
+
+        // Validate the secret code
+        Note note = notes.get(0);
+        if (!note.getSecretPassword().trim().equalsIgnoreCase(secretCode.trim()))
+            throw new IllegalArgumentException(
+                    "wrong password, the correct password is: " + note.getSecretPassword().trim());
+
+        // Mark the note as unavailable and save it
+        note.setAvailable(false);
+        note.setSecretPassword("");
+        noteRepository.save(note);
+    }
+
     /**
      * Retrieve all notes
      */
     public List<NoteDTO> getAllNotes() {
         List<Note> notes = noteRepository.findAll();
+        if (notes.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            return notes.stream().map(note -> NoteDTO.parseNoteToNoteDTO(note)).toList();
+        }
+    }
+
+    /**
+     * Retrieve all user's notes
+     */
+    public List<NoteDTO> getMyNotes(String userEmail) {
+        List<Note> notes = noteRepository.findByOwner_Email(userEmail);
         if (notes.isEmpty()) {
             return Collections.emptyList();
         } else {

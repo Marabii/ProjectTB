@@ -31,6 +31,14 @@ public class Note {
     private String description;
     private Double price;
 
+    @Builder.Default
+    private boolean isDigital = false;
+
+    @Builder.Default
+    private boolean isAvailable = true;
+
+    private String secretPassword;
+
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<NoteFile> files = new ArrayList<>();

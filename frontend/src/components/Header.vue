@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { Settings, User } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
@@ -11,6 +12,9 @@ import { RouterLink } from 'vue-router'
       </li>
       <li>
         <router-link to="/purchased-files" class="hover:underline">Purchased files</router-link>
+      </li>
+      <li>
+        <router-link to="/personal-notes" class="hover:underline">Personal Notes</router-link>
       </li>
       <li>
         <router-link to="/sell-files" class="hover:underline">Sell files</router-link>

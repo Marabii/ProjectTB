@@ -8,7 +8,6 @@ import { defineProps, ref, type PropType } from 'vue'
 import VuePdfEmbed from 'vue-pdf-embed'
 import 'vue-pdf-embed/dist/styles/annotationLayer.css'
 import 'vue-pdf-embed/dist/styles/textLayer.css'
-import { useRouter } from 'vue-router'
 
 const props = defineProps({
   noteFile: {
@@ -24,7 +23,6 @@ const loadingFailed = () => {
 
 // Handle Payment
 
-const router = useRouter()
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 

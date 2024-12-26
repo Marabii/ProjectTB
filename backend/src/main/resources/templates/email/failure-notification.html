@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f8f9fa;
+        padding: 20px;
+      }
+      .email-container {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background-color: #dc3545;
+        color: white;
+        padding: 15px;
+        border-radius: 8px 8px 0 0;
+        text-align: center;
+      }
+      .content {
+        margin-top: 20px;
+        color: #333333;
+      }
+      .important {
+        color: #dc3545;
+        font-weight: bold;
+      }
+      .footer {
+        margin-top: 25px;
+        font-size: 12px;
+        color: #6c757d;
+        text-align: center;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <h2>Email Delivery Issue</h2>
+      </div>
+      <div class="content">
+        <p>Dear <strong th:text="${buyerName}">Customer Name</strong>,</p>
+        <p>
+          We encountered an issue while sending you the confirmation for your
+          recent purchase of <strong th:text="${noteTitle}">Note Title</strong>.
+        </p>
+        <p class="important">Note ID: <span th:text="${noteId}">12345</span></p>
+        <p>
+          Our team is currently investigating this issue to ensure you receive
+          your purchased documents promptly.
+        </p>
+        <p>
+          In the meantime, if you have any questions or need assistance, please
+          feel free to contact our support team:
+        </p>
+        <p>
+          Email:
+          <a href="mailto:support@yourcompany.com">support@yourcompany.com</a>
+        </p>
+        <p>Thank you for your understanding and patience.</p>
+        <p>Best regards,<br />Your Company Team</p>
+      </div>
+      <div class="footer">&copy; 2024 Your Company. All rights reserved.</div>
+    </div>
+  </body>
+</html>

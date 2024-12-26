@@ -51,6 +51,9 @@ public class StripeService {
                 if (note.getAuthorizedUsers().stream().map(user -> user.getEmail()).toList().contains(userEmail))
                         throw new IllegalStateException("You have already purchased this item");
 
+                if (!note.isAvailable())
+                        throw new IllegalStateException("The documents aren't available yet");
+
                 // Calculating totalCost
                 Double totalCost = note.getPrice();
 

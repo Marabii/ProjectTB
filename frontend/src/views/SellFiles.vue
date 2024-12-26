@@ -1,84 +1,190 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import { serverURL } from '@/utilis/constants'
 
-// Reactive form fields
+// =====================
+//     CONSTANTS
+// =====================
+const MAX_SIZE_BYTES = 50 * 1024 * 1024 // 50MB
+
+// =====================
+//  REACTIVE VARIABLES
+// =====================
 const title = ref('')
 const description = ref('')
 const price = ref<number | null>(null)
+const isDigital = ref(false)
 
 // File inputs
 const documents = ref<FileList | null>(null)
 const demoFile = ref<File | null>(null)
 
+// =====================
+//  COMPUTED PROPERTIES
+// =====================
 /**
- * Handle multiple file selection for "documents"
+ * totalSize (in bytes) of all selected files:
+ *   - Demo file
+ *   - Documents (if isDigital is true)
  */
-const handleDocuments = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files) {
-    documents.value = target.files
+const totalSize = computed(() => {
+  let size = 0
+  if (demoFile.value) {
+    size += demoFile.value.size
   }
-}
+  if (isDigital.value && documents.value) {
+    for (let i = 0; i < documents.value.length; i++) {
+      size += documents.value[i].size
+    }
+  }
+  return size
+})
 
 /**
- * Handle single file selection for "demoFile"
+ * Convert bytes to a human-readable MB string
  */
-const handleDemoFile = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files?.[0]) {
-    demoFile.value = target.files[0]
-  }
+function formatBytesToMB(bytes: number): string {
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
 }
 
-/**
- * Upload note via FormData to the /protected/notes/upload endpoint
- */
-const uploadNote = async () => {
-  if (!documents.value || !demoFile.value) {
-    alert('Please select both documents and a demo file.')
+// =====================
+//    FILE HANDLERS
+// =====================
+function handleDocuments(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (!target.files) return
+
+  // Check each file size
+  for (let i = 0; i < target.files.length; i++) {
+    const file = target.files[i]
+    if (file.size > MAX_SIZE_BYTES) {
+      alert(`File "${file.name}" exceeds the 50MB limit.`)
+      target.value = '' // Reset the input
+      documents.value = null
+      return
+    }
+  }
+
+  // Check total size (demoFile + all selected documents)
+  let currentTotal = demoFile.value ? demoFile.value.size : 0
+  for (let i = 0; i < target.files.length; i++) {
+    currentTotal += target.files[i].size
+  }
+  if (currentTotal > MAX_SIZE_BYTES) {
+    alert('Total upload size exceeds the 50MB limit.')
+    target.value = ''
+    documents.value = null
     return
   }
 
+  // If all checks pass, set the documents
+  documents.value = target.files
+}
+
+function handleDemoFile(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (!target.files?.[0]) return
+
+  const file = target.files[0]
+
+  // Check individual file size
+  if (file.size > MAX_SIZE_BYTES) {
+    alert(`File "${file.name}" exceeds the 50MB limit.`)
+    target.value = ''
+    demoFile.value = null
+    return
+  }
+
+  // Check total size if documents are present (isDigital)
+  let currentTotal = file.size
+  if (isDigital.value && documents.value) {
+    for (let i = 0; i < documents.value.length; i++) {
+      currentTotal += documents.value[i].size
+    }
+  }
+  if (currentTotal > MAX_SIZE_BYTES) {
+    alert('Total upload size exceeds the 50MB limit.')
+    target.value = ''
+    demoFile.value = null
+    return
+  }
+
+  // If all checks pass, set the demoFile
+  demoFile.value = file
+}
+
+// =====================
+//    UPLOAD LOGIC
+// =====================
+async function uploadNote() {
+  // Basic checks
+  if (!demoFile.value) {
+    alert('Please select a demo file.')
+    return
+  }
+  if (isDigital.value && !documents.value) {
+    alert('Please select the required documents.')
+    return
+  }
+
+  // Final check for total size
+  if (totalSize.value > MAX_SIZE_BYTES) {
+    alert('Total upload size exceeds the 50MB limit.')
+    return
+  }
+
+  // Prepare FormData
   try {
     const formData = new FormData()
     formData.append('title', title.value)
     formData.append('description', description.value)
     formData.append('price', price.value?.toString() ?? '0')
+    formData.append('isDigital', isDigital.value.toString())
 
     // Append demoFile (single file)
     formData.append('demoFile', demoFile.value)
 
-    // Append documents (multiple files)
-    for (let i = 0; i < documents.value.length; i++) {
-      formData.append('documents', documents.value[i])
+    // Append documents (multiple files) only if isDigital is true
+    if (isDigital.value && documents.value) {
+      for (let i = 0; i < documents.value.length; i++) {
+        formData.append('documents', documents.value[i])
+      }
     }
 
     // Perform the POST request
-    const response = await axios.post(`${serverURL}/protected/notes/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    const response = await axios.post(`${serverURL}/api/protected/notes/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      withCredentials: true,
     })
 
     console.log('Note uploaded successfully:', response.data)
     alert('Note uploaded successfully!')
-    // Reset form after successful upload (optional)
     resetForm()
-  } catch (error) {
-    console.error('Error uploading note:', error)
-    alert('An error occurred while uploading the note.')
+  } catch (err: unknown) {
+    // Use AxiosError type-checking to handle errors gracefully
+    if (axios.isAxiosError(err)) {
+      if (err.response?.status === 413) {
+        alert('An unexpected error occurred: Maximum upload size exceeded.')
+      } else {
+        alert(`An error occurred: ${err.response?.data?.message ?? err.message}`)
+      }
+    } else {
+      // If it's not an Axios error, fallback to a generic error
+      console.error('Error uploading note:', err)
+      alert('An unknown error occurred while uploading the note.')
+    }
   }
 }
 
-/**
- * Reset form fields after successful upload
- */
-const resetForm = () => {
+// =====================
+//    RESET FORM
+// =====================
+function resetForm() {
   title.value = ''
   description.value = ''
   price.value = null
+  isDigital.value = false
   documents.value = null
   demoFile.value = null
 }
@@ -86,84 +192,118 @@ const resetForm = () => {
 
 <template>
   <!-- Outer container -->
-  <div class="flex min-h-screen items-center justify-center">
+  <div class="flex min-h-screen items-center justify-center bg-gray-100 px-4">
     <!-- White card container -->
-    <div class="bg-white text-black w-full max-w-md p-8 rounded-lg shadow-lg space-y-6">
-      <h1 class="text-2xl font-bold">Upload a New Note</h1>
+    <div class="bg-white text-black w-full max-w-md p-8 rounded-lg shadow-xl space-y-6">
+      <h1 class="text-3xl font-extrabold text-center">Upload a New Note</h1>
 
       <!-- Upload Form -->
-      <form @submit.prevent="uploadNote" class="space-y-4">
+      <form @submit.prevent="uploadNote" class="space-y-6">
         <!-- Title -->
         <div>
-          <label for="title" class="block font-medium mb-1"> Title </label>
+          <label for="title" class="block text-lg font-medium mb-2">Title</label>
           <input
             id="title"
             v-model="title"
             type="text"
             required
-            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-gray-500"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter the title of the note"
           />
         </div>
 
         <!-- Description -->
         <div>
-          <label for="description" class="block font-medium mb-1"> Description </label>
+          <label for="description" class="block text-lg font-medium mb-2">Description</label>
           <textarea
             id="description"
             v-model="description"
-            rows="3"
+            rows="4"
             required
-            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-gray-500"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter a brief description"
           ></textarea>
         </div>
 
         <!-- Price -->
         <div>
-          <label for="price" class="block font-medium mb-1"> Price </label>
+          <label for="price" class="block text-lg font-medium mb-2">Price</label>
           <input
             id="price"
             v-model.number="price"
             type="number"
+            min="0"
             required
-            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-gray-500"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter the price"
           />
         </div>
 
-        <!-- Multiple Documents -->
-        <div>
-          <label for="documents" class="block font-medium mb-1"> Documents (Multiple) </label>
+        <!-- Is Digital Checkbox -->
+        <div class="flex items-center">
+          <input
+            id="isDigital"
+            type="checkbox"
+            v-model="isDigital"
+            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label for="isDigital" class="ml-3 block text-lg font-medium">
+            Is this a Digital Product?
+          </label>
+        </div>
+
+        <!-- Multiple Documents (conditionally rendered) -->
+        <div v-if="isDigital" class="mt-4">
+          <label for="documents" class="block text-lg font-medium mb-2">Documents (Multiple)</label>
           <input
             id="documents"
             type="file"
             accept=".pdf,.docx,.xlsx,.txt"
             multiple
             @change="handleDocuments"
-            required
-            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            :required="isDigital"
+            class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <!-- Single Demo File -->
         <div>
-          <label for="demoFile" class="block font-medium mb-1"> Demo File (Single) </label>
+          <label for="demoFile" class="block text-lg font-medium mb-2">Demo File (Single)</label>
           <input
             id="demoFile"
             type="file"
             accept=".pdf,.docx,.xlsx,.txt"
             @change="handleDemoFile"
             required
-            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <!-- Submit Button -->
         <button
           type="submit"
-          class="bg-black w-full text-white px-4 py-2 rounded-md hover:bg-white hover:text-black border hover:border-black transition-colors font-semibold"
+          class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
         >
           Upload Note
         </button>
+
+        <!-- Total Size Display (in MB) -->
+        <div class="mt-4 text-right">
+          <span
+            :class="{
+              'text-green-600': totalSize <= MAX_SIZE_BYTES,
+              'text-red-600': totalSize > MAX_SIZE_BYTES,
+            }"
+          >
+            <!-- Pass totalSize (bytes) directly into formatBytesToMB -->
+            Total Size: {{ formatBytesToMB(totalSize) }}
+          </span>
+        </div>
       </form>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Add any additional styles if needed */
+</style>

@@ -1,12 +1,9 @@
 package com.projetTB.projetTB.Payments.CreatePaymentLink.Controller;
 
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.projetTB.projetTB.Auth.exceptions.UserNotFoundException;
-import com.projetTB.projetTB.Auth.models.Users;
-import com.projetTB.projetTB.Email.DTO.EmailRequest;
-import com.projetTB.projetTB.Email.service.EmailSenderService;
+import com.projetTB.projetTB.Notes.Repository.NoteRepository;
 import com.projetTB.projetTB.Notes.Service.NotesService;
+import com.projetTB.projetTB.Notes.models.Note;
+import com.projetTB.projetTB.Payments.CreatePaymentLink.Service.EmailService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
@@ -21,19 +18,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Random;
 
 @RestController
 @RequiredArgsConstructor
 public class WebhookController {
-    private final EmailSenderService emailSenderService;
+    private final EmailService emailService;
     private final NotesService notesService;
+    private final NoteRepository noteRepository;
 
     @Value("${stripe.webhookKey}")
     private String webhookKey;
@@ -69,14 +61,35 @@ public class WebhookController {
             if (stripeObject instanceof PaymentIntent paymentIntent) {
                 String buyerEmail = paymentIntent.getMetadata().get("buyerEmail");
                 Long noteId = Long.parseLong(paymentIntent.getMetadata().get("noteId"));
-
                 try {
-                    notesService.grantAccessToNoteFile(noteId, buyerEmail);
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
+                    Note note = noteRepository.findById(noteId)
+                            .orElseThrow(() -> new IllegalStateException("Document not found"));
+                    if (note.isDigital())
+                        notesService.grantAccessToNoteFile(noteId, buyerEmail);
+                    else {
+                        String documentsPassword = generatePassword();
+                        note.setSecretPassword(documentsPassword);
+                        noteRepository.save(note);
+                    }
+
+                    // Attempt to send the purchase confirmation email
+                    try {
+                        emailService.sendEmails(note, buyerEmail);
+                    } catch (Exception emailEx) {
+                        System.err.println("Failed to send purchase confirmation email: " + emailEx.getMessage());
+                        // Attempt to send failure notification email to the customer
+                        try {
+                            emailService.sendEmailFailureNotification(note, buyerEmail);
+                        } catch (Exception failureEx) {
+                            System.err.println("Failed to send failure notification email: " + failureEx.getMessage());
+                            // Optionally, log this failure or notify support through other means
+                        }
+                    }
+
+                } catch (Exception e) {
                     e.printStackTrace();
+                    // Optionally, handle other exceptions or notify support
                 }
-                // sendEmails200(noteId);
             }
             break;
         case "payment_method.attached":
@@ -93,85 +106,15 @@ public class WebhookController {
         return ResponseEntity.noContent().build();
     }
 
-    // private void sendEmails200(String orderId) {
-    // Orders order = ordersRepository.findById(orderId)
-    // .orElseThrow(() -> new OrderNotFoundException("Could not find order " +
-    // orderId));
-    // Users traveler = usersRepository.findById(order.getTravelerId())
-    // .orElseThrow(() -> new UserNotFoundException("Could not find traveler"));
-    // Users buyer = usersRepository.findById(order.getBuyerId())
-    // .orElseThrow(() -> new UserNotFoundException("Could not find buyer"));
+    public static String generatePassword() {
+        char[] letters = { 'A', 'B', 'C' };
+        StringBuilder result = new StringBuilder();
+        Random random = new Random();
 
-    // try {
-    // // Prepare placeholders for the traveler email
-    // Map<String, String> travelerPlaceholders = new HashMap<>();
-    // travelerPlaceholders.put("travelerName", traveler.getName());
-    // travelerPlaceholders.put("actualValue",
-    // String.valueOf(order.getActualValue()));
-    // travelerPlaceholders.put("deliveryFee",
-    // String.valueOf(order.getActualDeliveryFee()));
-    // travelerPlaceholders.put("orderId", order.get_id());
-    // travelerPlaceholders.put("productName", order.getProductName());
-    // travelerPlaceholders.put("description", order.getDescription());
-    // // Add more placeholders as needed
+        for (int i = 0; i < 8; i++) { // Increased password length for better security
+            result.append(letters[random.nextInt(letters.length)]);
+        }
 
-    // // Generate email content for the traveler
-    // String travelerEmailContent = getEmailContent("traveler_email_template.html",
-    // travelerPlaceholders);
-
-    // // Create and send the email to the traveler
-    // EmailRequest travelerEmailRequest =
-    // EmailRequest.builder().recipient(traveler.getEmail())
-    // .subject("Order Transaction
-    // Completed").message(travelerEmailContent).build();
-
-    // emailSenderService.sendEmail(travelerEmailRequest);
-
-    // // Prepare placeholders for the buyer email
-    // Map<String, String> buyerPlaceholders = new HashMap<>();
-    // buyerPlaceholders.put("buyerName", buyer.getName());
-    // buyerPlaceholders.put("actualValue", String.valueOf(order.getActualValue()));
-    // buyerPlaceholders.put("orderId", order.get_id());
-    // buyerPlaceholders.put("productName", order.getProductName());
-    // buyerPlaceholders.put("description", order.getDescription());
-    // // Add more placeholders as needed
-
-    // // Generate email content for the buyer
-    // String buyerEmailContent = getEmailContent("buyer_email_template.html",
-    // buyerPlaceholders);
-
-    // // Create and send the email to the buyer
-    // EmailRequest buyerEmailRequest =
-    // EmailRequest.builder().recipient(buyer.getEmail())
-    // .subject("Transaction Successful").message(buyerEmailContent).build();
-
-    // emailSenderService.sendEmail(buyerEmailRequest);
-
-    // } catch (IOException e) {
-    // // Handle exceptions (e.g., log the error)
-    // e.printStackTrace();
-    // }
-    // }
-
-    // private String getEmailContent(String templateFileName, Map<String, String>
-    // placeholders) throws IOException {
-    // // Load the email template from the resources/templates/ directory
-    // ClassLoader classLoader = getClass().getClassLoader();
-    // InputStream inputStream = classLoader.getResourceAsStream("templates/" +
-    // templateFileName);
-    // if (inputStream == null) {
-    // throw new FileNotFoundException("Template file not found: " +
-    // templateFileName);
-    // }
-    // String template = new String(inputStream.readAllBytes(),
-    // StandardCharsets.UTF_8);
-
-    // // Replace placeholders with actual values
-    // for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-    // template = template.replace("${" + entry.getKey() + "}", entry.getValue());
-    // }
-
-    // return template;
-    // }
-
+        return result.toString();
+    }
 }

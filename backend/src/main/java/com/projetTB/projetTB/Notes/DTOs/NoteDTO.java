@@ -23,12 +23,15 @@ public class NoteDTO {
     private List<NoteFileDTO> files;
     private NoteFileDTO demoFile;
     private List<UserDTO> authorizedUsers;
+    private boolean isDigital;
+    private boolean isAvailable;
 
     public static NoteDTO parseNoteToNoteDTO(Note noteInput) {
         NoteDTO result = NoteDTO.builder().id(noteInput.getId()).owner(UserDTO.parseUserToUserDTO(noteInput.getOwner()))
                 .title(noteInput.getTitle()).description(noteInput.getDescription()).price(noteInput.getPrice())
                 .files(noteInput.getFiles().stream().map(file -> NoteFileDTO.parseNoteFileToNoteFileDTO(file)).toList())
                 .demoFile(NoteFileDTO.parseNoteFileToNoteFileDTO(noteInput.getDemoFile()))
+                .isAvailable(noteInput.isAvailable()).isDigital(noteInput.isDigital())
                 .authorizedUsers(
                         noteInput.getAuthorizedUsers().stream().map(user -> UserDTO.parseUserToUserDTO(user)).toList())
                 .build();
