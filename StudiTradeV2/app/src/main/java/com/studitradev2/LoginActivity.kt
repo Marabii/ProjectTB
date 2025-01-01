@@ -6,23 +6,24 @@ import android.os.Bundle
 import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.Colors
+import com.studitradev2.api.RetrofitInstance
+import com.studitradev2.models.AuthenticationRequest
+import com.studitradev2.models.AuthenticationResponse
+import com.studitradev2.models.RegisterRequest
 import com.studitradev2.ui.theme.StudiTradeV2Theme
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class LoginActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -35,14 +36,14 @@ class LoginActivity : ComponentActivity() {
 
         setContent {
             StudiTradeV2Theme {
-                LoginScreen(
-                    onLoginSuccess = {
-                        // Navigue vers MainActivity si login réussi
+                LoginRegisterScreen(
+                    onLoginSuccess = { token ->
+                        // Sauvegarder le token JWT et naviguer vers MainActivity
+                        sharedPreferences.edit().putString("jwt_token", token).apply()
                         val intent = Intent(this, MainActivity::class.java)
                         startActivity(intent)
-                        finish() // Ferme LoginActivity
-                    },
-                    sharedPreferences = sharedPreferences // Passer SharedPreferences
+                        finish()
+                    }
                 )
             }
         }
@@ -50,88 +51,91 @@ class LoginActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit, sharedPreferences: SharedPreferences) {
-    // Charger les identifiants sauvegardés
-    val savedEmail = sharedPreferences.getString("email", "lucas@emse.fr") ?: ""
-    val savedPassword = sharedPreferences.getString("password", "1234") ?: ""
-
-    // États pour les champs de connexion
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf("") }
+fun LoginRegisterScreen(onLoginSuccess: (String) -> Unit) {
+    var isLoginMode by remember { mutableStateOf(true) } // Basculer entre Login et Register
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
-            .padding(top = 64.dp),
-        verticalArrangement = Arrangement.Top,
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Titre avec deux niveaux
         Text(
-            text = "Welcome to",
-            style = TextStyle(
-                color = Color.Black,
-                fontSize = 20.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Normal,
-                textAlign = TextAlign.Center
-            ),
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Text(
-            text = "StudiTrade",
-            style = TextStyle(
-                color = Color.Black,
-                fontSize = 36.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                textAlign = TextAlign.Center
-            ),
-            modifier = Modifier.padding(bottom = 32.dp)
+            text = if (isLoginMode) "Login to StudiTrade" else "Register to StudiTrade",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.Black
         )
 
-        // Champ Email
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isLoginMode) {
+            LoginScreenContent(
+                onLoginSuccess = onLoginSuccess,
+                onToggleMode = { isLoginMode = false }
+            )
+        } else {
+            RegisterScreenContent(
+                onRegisterSuccess = { isLoginMode = true },
+                onToggleMode = { isLoginMode = true }
+            )
+        }
+    }
+}
+
+@Composable
+fun LoginScreenContent(onLoginSuccess: (String) -> Unit, onToggleMode: () -> Unit) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CustomTextField(
-            label = "Write your email",
+            label = "Email",
             value = email,
             onValueChange = { email = it },
             visualTransformation = VisualTransformation.None
         )
-
-        // Champ Password
         CustomTextField(
-            label = "Write your password",
+            label = "Password",
             value = password,
             onValueChange = { password = it },
             visualTransformation = PasswordVisualTransformation()
         )
 
-        // Bouton Login
         Button(
             onClick = {
-                // Validation des identifiants
-                if (email == savedEmail && password == savedPassword) {
-                    errorMessage = ""
-                    onLoginSuccess()
-                } else {
-                    errorMessage = "Invalid email or password"
-                }
+                isLoading = true
+                val request = AuthenticationRequest(email = email, password = password)
+                RetrofitInstance.authApi.login(request).enqueue(object : Callback<AuthenticationResponse> {
+                    override fun onResponse(
+                        call: Call<AuthenticationResponse>,
+                        response: Response<AuthenticationResponse>
+                    ) {
+                        isLoading = false
+                        if (response.isSuccessful) {
+                            val token = response.body()?.token ?: ""
+                            onLoginSuccess(token) // Naviguer vers MainActivity
+                        } else {
+                            errorMessage = "Invalid email or password"
+                        }
+                    }
+
+                    override fun onFailure(call: Call<AuthenticationResponse>, t: Throwable) {
+                        isLoading = false
+                        errorMessage = "Error: ${t.localizedMessage}"
+                    }
+                })
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-            shape = RoundedCornerShape(12.dp),
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp)
-                .height(50.dp)
+                .padding(vertical = 16.dp)
         ) {
-            Text(
-                text = "Login",
-                color = Color.White,
-                fontSize = 18.sp
-            )
+            Text(text = if (isLoading) "Logging in..." else "Login")
         }
 
-        // Message d’erreur
         if (errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
@@ -139,34 +143,84 @@ fun LoginScreen(onLoginSuccess: () -> Unit, sharedPreferences: SharedPreferences
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
+
+        TextButton(onClick = onToggleMode) {
+            Text(text = "Don't have an account? Register here.", color = Color.Black)
+        }
     }
 }
 
 @Composable
-fun CustomTextField(label: String, value: String, onValueChange: (String) -> Unit, visualTransformation: VisualTransformation) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp)
-            .height(50.dp)
-            .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        if (value.isEmpty()) {
+fun RegisterScreenContent(onRegisterSuccess: () -> Unit, onToggleMode: () -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        CustomTextField(label = "Name", value = name, onValueChange = { name = it }, visualTransformation = VisualTransformation.None)
+        CustomTextField(label = "Email", value = email, onValueChange = { email = it }, visualTransformation = VisualTransformation.None)
+        CustomTextField(label = "Password", value = password, onValueChange = { password = it }, visualTransformation = PasswordVisualTransformation())
+        CustomTextField(label = "Phone Number", value = phoneNumber, onValueChange = { phoneNumber = it }, visualTransformation = VisualTransformation.None)
+
+        Button(
+            onClick = {
+                isLoading = true
+                val request = RegisterRequest(name, email, password, phoneNumber)
+                RetrofitInstance.authApi.register(request).enqueue(object : Callback<Unit> {
+                    override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                        isLoading = false
+                        if (response.isSuccessful) {
+                            onRegisterSuccess() // Retourne au mode Login
+                        } else {
+                            errorMessage = "Registration failed: ${response.errorBody()?.string() ?: "Unknown error"}"
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Unit>, t: Throwable) {
+                        isLoading = false
+                        errorMessage = "Error: ${t.localizedMessage}"
+                    }
+                })
+            },
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        ) {
+            Text(text = if (isLoading) "Registering..." else "Register")
+        }
+
+        if (errorMessage.isNotEmpty()) {
             Text(
-                text = label,
-                color = Color.Gray,
-                fontSize = 16.sp
+                text = errorMessage,
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 18.sp),
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = visualTransformation,
-            keyboardOptions = KeyboardOptions.Default
-        )
+
+        TextButton(onClick = onToggleMode) {
+            Text(text = "Already have an account? Login here.", color = Color.Black)
+        }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomTextField(label: String, value: String, onValueChange: (String) -> Unit, visualTransformation: VisualTransformation) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        visualTransformation = visualTransformation,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.Black,
+            unfocusedBorderColor = Color.Gray
+        )
+    )
 }

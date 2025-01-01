@@ -5,13 +5,9 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,9 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
+import com.studitradev2.api.RetrofitInstance
+import com.studitradev2.models.UserDTO
 import com.studitradev2.ui.theme.StudiTradeV2Theme
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ProfileActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -46,39 +46,27 @@ class ProfileActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences) {
-    // Charger les données sauvegardées au démarrage
-    var name by remember { mutableStateOf(sharedPreferences.getString("name", "Lucas Chateau") ?: "") }
-    var universityIndex by remember {
-        mutableIntStateOf(
-            sharedPreferences.getInt("universityIndex", 0) // Charge l'index sauvegardé (par défaut 0)
-        )
-    }
-    var studyProgramIndex by remember {
-        mutableIntStateOf(
-            sharedPreferences.getInt("studyProgramIndex", 0) // Charge l'index sauvegardé (par défaut 0)
-        )
-    }
-    var yearOfStudyIndex by remember {
-        mutableIntStateOf(
-            sharedPreferences.getInt("yearOfStudyIndex", 0) // Charge l'index sauvegardé (par défaut 0)
-        )
-    }
-
-    // Listes des options
-    val universities = listOf("EMSE", "HEC Paris", "INSEAD")
-    val studyPrograms = listOf("Business Administration", "Engineering", "Computer Science")
-    val yearsOfStudy = listOf("1st Year", "2nd Year", "3rd Year", "4th Year")
-
-    // Snackbar pour afficher un message de confirmation
-    val snackbarHostState = remember { SnackbarHostState() }
+    // Variables d'état pour les données utilisateur
+    var user by remember { mutableStateOf<UserDTO?>(null) }
+    var errorMessage by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+
+    // Charger les informations utilisateur au démarrage
+    LaunchedEffect(Unit) {
+        fetchUserInfo { fetchedUser, error ->
+            if (fetchedUser != null) {
+                user = fetchedUser
+                errorMessage = ""
+            } else {
+                errorMessage = error ?: "Failed to load user information"
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(text = "Profile", color = Color.White, fontSize = 20.sp)
-                },
+                title = { Text(text = "Profile", color = Color.White, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -90,143 +78,86 @@ fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                // Champ pour le nom
-                ProfileCustomTextField(
-                    label = "Name",
-                    value = name,
-                    onValueChange = { name = it }
-                )
+            if (user != null) {
+                // Afficher les informations utilisateur
+                Text(text = "Name: ${user!!.username}", fontSize = 18.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Email: ${user!!.email}", fontSize = 18.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Phone: ${user!!.phoneNumber}", fontSize = 18.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Dropdown pour Université
-                CustomDropdownMenu(
-                    label = "University",
-                    options = universities,
-                    selectedIndex = universityIndex,
-                    onItemSelected = { universityIndex = it }
-                )
-
-                // Dropdown pour Domaine d'étude
-                CustomDropdownMenu(
-                    label = "Study Program",
-                    options = studyPrograms,
-                    selectedIndex = studyProgramIndex,
-                    onItemSelected = { studyProgramIndex = it }
-                )
-
-                // Dropdown pour Année d'étude
-                CustomDropdownMenu(
-                    label = "Year of Study",
-                    options = yearsOfStudy,
-                    selectedIndex = yearOfStudyIndex,
-                    onItemSelected = { yearOfStudyIndex = it }
-                )
-            }
-
-            FloatingActionButton(
-                onClick = {
-                    // Sauvegarder les données dans les SharedPreferences
-                    sharedPreferences.edit {
-                        putString("name", name)
-                        putInt("universityIndex", universityIndex)
-                        putInt("studyProgramIndex", studyProgramIndex)
-                        putInt("yearOfStudyIndex", yearOfStudyIndex)
-                    }
-                    // Afficher une confirmation
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Modifications saved successfully")
-                    }
-                },
-                modifier = Modifier.align(Alignment.End),
-                containerColor = Color.Black
-            ) {
-                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "Save", tint = Color.White)
-            }
-        }
-    }
-}
-
-@Composable
-fun CustomDropdownMenu(
-    label: String,
-    options: List<String>,
-    selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
-) {
-    var isDropDownExpanded by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-
-        Box {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isDropDownExpanded = true }
-            ) {
-                Text(
-                    text = options[selectedIndex],
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Dropdown Icon"
-                )
-            }
-
-            DropdownMenu(
-                expanded = isDropDownExpanded,
-                onDismissRequest = { isDropDownExpanded = false }
-            ) {
-                options.forEachIndexed { index, option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            isDropDownExpanded = false
-                            onItemSelected(index)
+                // Vérifier l'utilisateur
+                Button(
+                    onClick = {
+                        verifyUser { isVerified, error ->
+                            if (isVerified) {
+                                scope.launch {
+                                    SnackbarHostState().showSnackbar("User verified successfully")
+                                }
+                            } else {
+                                errorMessage = error ?: "Failed to verify user"
+                            }
                         }
-                    )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                ) {
+                    Text(text = "Verify User", color = Color.White)
                 }
+            } else if (errorMessage.isNotEmpty()) {
+                // Afficher le message d'erreur si les données échouent à se charger
+                Text(text = errorMessage, color = Color.Red, fontSize = 16.sp)
+            } else {
+                // Afficher un indicateur de chargement
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProfileCustomTextField(label: String, value: String, onValueChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Gray,
-            cursorColor = Color.Black
-        ),
-        keyboardOptions = KeyboardOptions.Default
-    )
+fun fetchUserInfo(callback: (UserDTO?, String?) -> Unit) {
+    val call = RetrofitInstance.userApi.getUserInfo()
+    call.enqueue(object : Callback<UserDTO> {
+        override fun onResponse(call: Call<UserDTO>, response: Response<UserDTO>) {
+            if (response.isSuccessful) {
+                callback(response.body(), null)
+            } else {
+                callback(null, "Failed to load user info: ${response.code()}")
+            }
+        }
+
+        override fun onFailure(call: Call<UserDTO>, t: Throwable) {
+            callback(null, "Error: ${t.localizedMessage}")
+        }
+    })
+}
+
+fun verifyUser(callback: (Boolean, String?) -> Unit) {
+    val call = RetrofitInstance.userApi.verifyUser()
+    call.enqueue(object : Callback<Map<String, Boolean>> {
+        override fun onResponse(
+            call: Call<Map<String, Boolean>>,
+            response: Response<Map<String, Boolean>>
+        ) {
+            if (response.isSuccessful && response.body()?.get("success") == true) {
+                callback(true, null)
+            } else {
+                callback(false, "Verification failed: ${response.message()}")
+            }
+        }
+
+        override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
+            callback(false, "Error: ${t.localizedMessage}")
+        }
+    })
 }

@@ -165,7 +165,6 @@ fun SettingsScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomTextField(label: String, value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
@@ -176,7 +175,7 @@ fun CustomTextField(label: String, value: String, onValueChange: (String) -> Uni
             .fillMaxWidth()
             .height(60.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = TextFieldDefaults.outlinedTextFieldColors(
+        colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Black,
             unfocusedBorderColor = Color.Gray,
             cursorColor = Color.Black
