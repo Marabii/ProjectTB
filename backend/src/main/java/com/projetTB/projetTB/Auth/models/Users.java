@@ -2,6 +2,8 @@ package com.projetTB.projetTB.Auth.models;
 
 import com.projetTB.projetTB.Auth.DTO.VerificationDetails;
 import com.projetTB.projetTB.Auth.enums.ROLE;
+import com.projetTB.projetTB.Notes.models.Note;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,10 +12,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -22,8 +26,8 @@ import java.util.List;
 @Table(name = "users")
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
 public class Users implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,7 +50,7 @@ public class Users implements UserDetails {
     private String phoneNumber;
 
     @NotBlank(message = "Name cannot be empty")
-    @Size(min = 2, max = 100, message = "name must be between 2 and 100 characters")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     @Column(nullable = false)
     private String username;
 
@@ -62,6 +66,11 @@ public class Users implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ROLE role = ROLE.USER;
+
+    @ManyToMany
+    @JoinTable(name = "user_favourite_notes", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "note_id"))
+    @Builder.Default
+    private List<Note> favouriteNotes = new ArrayList<>();
 
     @Column
     @Builder.Default

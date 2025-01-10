@@ -1,5 +1,6 @@
 package com.projetTB.projetTB.Notes.Controller;
 
+import com.projetTB.projetTB.Auth.exceptions.UserNotFoundException;
 import com.projetTB.projetTB.Notes.DTOs.NoteDTO;
 import com.projetTB.projetTB.Notes.DTOs.NoteFileDTO;
 import com.projetTB.projetTB.Notes.Service.NotesService;
@@ -67,6 +68,62 @@ public class NotesController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/protected/favourite-documents")
+    public ResponseEntity<List<NoteDTO>> getFavouriteNotes(HttpServletRequest request) {
+        String userEmail = request.getUserPrincipal().getName();
+        try {
+            List<NoteDTO> favouriteNotes = notesService.getFavouriteDocuments(userEmail);
+            return ResponseEntity.ok(favouriteNotes);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            // Log the exception (omitted for brevity)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PutMapping("/protected/favourite-documents/{noteId}")
+    public ResponseEntity<String> addToFavouriteNotes(HttpServletRequest request, @PathVariable Long noteId) {
+        String userEmail = request.getUserPrincipal().getName();
+        System.out.println(noteId);
+        System.out.println("api called");
+        try {
+            notesService.addToFavouriteDocuments(userEmail, noteId);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Note added to favorites successfully.");
+        } catch (UserNotFoundException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Log the exception (omitted for brevity)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+        }
+    }
+
+    @DeleteMapping("/protected/favourite-documents/{noteId}")
+    public ResponseEntity<String> removeFromFavouriteNotes(HttpServletRequest request, @PathVariable Long noteId) {
+        String userEmail = request.getUserPrincipal().getName();
+        System.out.println(noteId);
+        System.out.println("removeFromFavouriteNotes API called");
+        try {
+            notesService.removeFromFavouriteDocuments(userEmail, noteId);
+            return ResponseEntity.ok("Note removed from favorites successfully.");
+        } catch (UserNotFoundException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Log the exception (omitted for brevity)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }
 

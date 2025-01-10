@@ -8,6 +8,7 @@ import { serverURL } from '@/utilis/constants'
 import PersonalNotes from '@/views/PersonalNotes.vue'
 import SuccessfulPayment from '@/views/SuccessfulPayment.vue'
 import FailedPayment from '@/views/FailedPayment.vue'
+import FavouriteNotes from '@/views/FavouriteNotes.vue'
 
 const routes = [
   {
@@ -40,6 +41,12 @@ const routes = [
     path: '/personal-notes',
     name: 'Personal notes',
     component: PersonalNotes,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/my-favorites',
+    name: 'Favourite notes',
+    component: FavouriteNotes,
     meta: { requiresAuth: true },
   },
 ]

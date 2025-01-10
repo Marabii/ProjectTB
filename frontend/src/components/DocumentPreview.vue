@@ -54,7 +54,7 @@ const handlePayment = async () => {
       if (status === 401 || status === 403) {
         alert('You might have forgotten to log in or you do not have an account.')
       } else {
-        alert(`An error occurred: ${err.response.statusText}`)
+        alert(`An error occurred: ${err.response.statusText} ${err.message}`)
       }
     } else if (err instanceof Error) {
       // Handle other errors

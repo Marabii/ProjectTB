@@ -6,18 +6,20 @@ import { serverURL } from '@/utilis/constants'
 import DocumentCard from '@/components/DocumentCard.vue'
 
 const notesData = ref<NoteDTO[]>([])
-const isLoading = ref<boolean>(true) // Add a loading state
+const isLoading = ref<boolean>(true)
 
 const loadNotesData = async () => {
   try {
-    const response = await axios.get(`${serverURL}/api/notes`)
+    const response = await axios.get(`${serverURL}/api/protected/favourite-documents`, {
+      withCredentials: true,
+    })
     notesData.value = response.data
     console.log(response.data)
   } catch (error) {
     console.error('Error fetching data:', error)
     alert('Loading documents failed')
   } finally {
-    isLoading.value = false // Set loading to false when data is fetched
+    isLoading.value = false
   }
 }
 

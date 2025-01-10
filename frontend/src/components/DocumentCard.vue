@@ -1,6 +1,7 @@
 <!-- YourParentComponent.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios, { AxiosError } from 'axios'
 import VuePdfEmbed from 'vue-pdf-embed'
 import 'vue-pdf-embed/dist/styles/annotationLayer.css'
 import 'vue-pdf-embed/dist/styles/textLayer.css'
@@ -10,9 +11,10 @@ import type { PropType } from 'vue'
 // Import the Heart icon from lucide-vue-next
 import { Heart } from 'lucide-vue-next'
 import DocumentPreview from './DocumentPreview.vue'
+import { serverURL } from '@/utilis/constants'
 
 // Define component props
-defineProps({
+const props = defineProps({
   noteFile: {
     type: Object as PropType<NoteDTO>,
     required: true,
@@ -27,9 +29,17 @@ const loadingFailed = () => {
 // Heart state
 const isHeartFilled = ref<boolean>(false)
 
+// Loading state
+const loading = ref<boolean>(false)
+
 // Function to toggle heart state
 const toggleHeart = () => {
-  isHeartFilled.value = !isHeartFilled.value
+  if (loading.value) return // Prevent toggling while loading
+  if (isHeartFilled.value) {
+    removeFromFavorites()
+  } else {
+    addToFavorites()
+  }
 }
 
 // Handle document preview
@@ -43,6 +53,81 @@ const openPreview = () => {
 // Function to close preview
 const closePreview = () => {
   previewDocument.value = false
+}
+
+// Function to check if the note is already favorited
+const checkIfFavorited = async () => {
+  try {
+    const response = await axios.get(`${serverURL}/api/protected/favourite-documents`, {
+      withCredentials: true,
+    })
+    const favoriteNotes: NoteDTO[] = response.data
+
+    isHeartFilled.value = favoriteNotes.some((note) => note.id === props.noteFile.id)
+  } catch (error) {
+    console.error('Error fetching favorite documents:', error)
+    // Optionally handle the error, e.g., show a notification
+  }
+}
+
+// Fetch initial favorite state when component mounts
+onMounted(() => {
+  checkIfFavorited()
+})
+
+// Function to add to favorites
+const addToFavorites = async () => {
+  loading.value = true
+  try {
+    const response = await axios.put(
+      `${serverURL}/api/protected/favourite-documents/${props.noteFile.id}`,
+      {},
+      { withCredentials: true },
+    )
+    if (response.status === 201) {
+      isHeartFilled.value = true
+      console.log(response.data)
+      alert('Added to favorites!')
+    }
+  } catch (err) {
+    const error = err as AxiosError
+    console.error('Error adding to favorites:', error)
+
+    if (error.response?.status === 401) {
+      alert('You need to log in first to add this item to favorites.')
+    } else {
+      alert('Failed to add to favorites. Please try again.')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// Function to remove from favorites
+const removeFromFavorites = async () => {
+  loading.value = true
+  try {
+    const response = await axios.delete(
+      `${serverURL}/api/protected/favourite-documents/${props.noteFile.id}`,
+      { withCredentials: true },
+    )
+    if (response.status === 200) {
+      isHeartFilled.value = false
+      console.log(response.data)
+      alert('Removed from favorites!')
+    }
+  } catch (err) {
+    const error = err as AxiosError
+    console.error('Error removing from favorites:', error)
+
+    if (error.response?.status === 401) {
+      alert('You need to log in first to remove this item from favorites.')
+    } else {
+      alert('Failed to remove from favorites. Please try again.')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -81,7 +166,8 @@ const closePreview = () => {
       <div class="flex justify-between items-center px-6 pb-4">
         <button
           @click="toggleHeart"
-          class="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
+          :disabled="loading"
+          class="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors focus:outline-none"
           aria-label="Toggle Favorite"
         >
           <Heart

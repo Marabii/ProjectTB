@@ -40,3 +40,5 @@ src/main/resources/googleapis-cors.json
 
 ### VS Code ###
 .vscode/
+
+.codegpt

@@ -46,7 +46,11 @@ const depositDocuments = async (noteId: number) => {
   depositMessageType.value = null
 
   try {
-    const response = await axios.put(`${serverURL}/protected/notes/${noteId}/deposit-documents`)
+    const response = await axios.put(
+      `${serverURL}/api/protected/notes/${noteId}/deposit-documents`,
+      {},
+      { withCredentials: true },
+    )
     if (response.status === 200) {
       depositMessage.value = 'Documents deposited successfully.'
       depositMessageType.value = 'success'
@@ -60,6 +64,8 @@ const depositDocuments = async (noteId: number) => {
         depositMessage.value = 'Conflict: Documents cannot be deposited at this time.'
       } else if (error.response.status === 404) {
         depositMessage.value = 'Error: Document not found.'
+      } else if (error.response.status === 401) {
+        depositMessage.value = 'Error: You should relogin.'
       } else {
         depositMessage.value = 'An unexpected error occurred.'
       }
@@ -79,90 +85,104 @@ const depositDocuments = async (noteId: number) => {
 </script>
 
 <template>
-  <div class="p-4">
-    <!-- Main Card -->
-    <div
-      class="max-w-sm bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-shadow duration-300"
+  <div class="bg-white w-fit">
+    <button
+      @click="openPreview"
+      class="p-4 max-w-sm bg-white rounded-xl shadow-md hover:shadow-2xl transition-shadow duration-300 focus:outline-none"
     >
-      <button @click="openPreview" class="w-full focus:outline-none">
-        <!-- PDF Thumbnail -->
-        <div class="w-full bg-gray-100 flex items-center justify-center h-48">
-          <VuePdfEmbed
-            :source="noteFile.demoFile.fileUrl"
-            text-layer
-            :page="1"
-            annotation-layer
-            class="h-full w-full object-cover"
-            @loading-failed="loadingFailed"
-          />
-        </div>
+      <!-- PDF Thumbnail -->
+      <div class="w-fit mx-auto bg-gray-100 flex items-center justify-center">
+        <VuePdfEmbed
+          :source="noteFile.demoFile.fileUrl"
+          text-layer
+          :page="1"
+          annotation-layer
+          class="h-full w-full object-cover"
+          @loading-failed="loadingFailed"
+        />
+      </div>
+    </button>
+    <!-- Content -->
+    <div class="p-6 text-start flex flex-col space-y-4">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ noteFile.title }}</h2>
+        <p class="text-lg text-gray-600">
+          <span class="font-medium text-gray-700">Price:</span>
+          <span class="font-bold text-blue-600">{{ noteFile.price }}€</span>
+        </p>
+        <p class="text-lg text-gray-600">
+          <span class="font-medium text-gray-700">Author:</span>
+          <span class="font-bold text-blue-600">{{ noteFile.owner.username }}</span>
+        </p>
+      </div>
 
-        <!-- Content -->
-        <div class="p-6">
-          <h2 class="text-xl font-semibold text-gray-800">{{ noteFile.title }}</h2>
-          <p class="mt-2 text-gray-600">
-            Price: <span class="font-bold text-black">{{ noteFile.price }}€</span>
-          </p>
-          <p class="mt-1 text-gray-600">
-            Author: <span class="font-bold text-black">{{ noteFile.owner.username }}</span>
-          </p>
+      <!-- Digital/Physical Indication -->
+      <div class="flex items-center">
+        <span class="text-gray-700 font-medium mr-2">Status:</span>
+        <span
+          :class="noteFile.isDigital ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+          class="px-3 py-1 rounded-full text-sm font-semibold"
+        >
+          {{ noteFile.isDigital ? 'Digital' : 'Physical' }}
+        </span>
+      </div>
 
-          <!-- Digital/Physical Indication -->
-          <p class="mt-2">
-            Status:
-            <span
-              :class="noteFile.isDigital ? 'text-green-600' : 'text-blue-600'"
-              class="font-semibold"
-            >
-              {{ noteFile.isDigital ? 'Digital' : 'Physical' }}
-            </span>
-          </p>
+      <!-- Availability Indication -->
+      <div v-if="!noteFile.isDigital" class="flex items-center">
+        <span class="text-gray-700 font-medium mr-2">Availability:</span>
+        <span
+          :class="noteFile.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+          class="px-3 py-1 rounded-full text-sm font-semibold"
+        >
+          {{ noteFile.isAvailable ? 'Available' : 'Not Available' }}
+        </span>
+      </div>
 
-          <!-- Availability Indication and Deposit Button -->
-          <div v-if="!noteFile.isDigital" class="mt-2">
-            <span
-              :class="noteFile.isAvailable ? 'text-green-600' : 'text-red-600'"
-              class="font-semibold"
-            >
-              {{ noteFile.isAvailable ? 'Available' : 'Not Available' }}
-            </span>
+      <!-- Deposit Documents Section -->
+      <div v-if="!noteFile.isDigital && !noteFile.isAvailable" class="mt-4">
+        <p class="text-gray-700 mb-2">
+          Please check if the deposit box is empty. If not, deposit the documents.
+        </p>
+        <button
+          @click="depositDocuments(noteFile.id)"
+          :disabled="isDepositing"
+          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center"
+        >
+          <svg
+            v-if="isDepositing"
+            class="animate-spin h-5 w-5 mr-2 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          {{ isDepositing ? 'Depositing...' : 'Deposit Documents' }}
+        </button>
 
-            <div v-if="!noteFile.isAvailable" class="mt-2">
-              <p class="text-gray-700">
-                Please check if the deposit box is empty. If not, deposit the documents.
-              </p>
-              <button
-                @click="depositDocuments(noteFile.id)"
-                :disabled="isDepositing"
-                class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
-              >
-                {{ isDepositing ? 'Depositing...' : 'Deposit Documents' }}
-              </button>
-
-              <!-- Feedback Message -->
-              <p
-                v-if="depositMessage"
-                :class="depositMessageType === 'success' ? 'text-green-600' : 'text-red-600'"
-                class="mt-2 font-semibold"
-              >
-                {{ depositMessage }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </button>
-
-      <!-- Actions -->
-      <div class="flex justify-between items-center px-6 pb-4">
-        <!-- Additional actions can be added here if needed -->
+        <!-- Feedback Message -->
+        <p
+          v-if="depositMessage"
+          :class="depositMessageType === 'success' ? 'text-green-600' : 'text-red-600'"
+          class="mt-3 font-semibold text-center"
+        >
+          {{ depositMessage }}
+        </p>
       </div>
     </div>
-
-    <!-- Document Preview Modal with Transition -->
-    <transition name="fade">
-      <DocumentPreview v-if="previewDocument" :noteFile="noteFile" @close="closePreview" />
-    </transition>
   </div>
+  <!-- Document Preview Modal with Transition -->
+  <transition name="fade">
+    <DocumentPreview v-if="previewDocument" :noteFile="noteFile" @close="closePreview" />
+  </transition>
 </template>
 
 <style>

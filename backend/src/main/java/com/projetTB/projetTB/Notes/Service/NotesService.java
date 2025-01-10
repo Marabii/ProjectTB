@@ -1,5 +1,6 @@
 package com.projetTB.projetTB.Notes.Service;
 
+import com.projetTB.projetTB.Auth.exceptions.UserNotFoundException;
 import com.projetTB.projetTB.Auth.models.Users;
 import com.projetTB.projetTB.Auth.repository.UsersRepository;
 import com.projetTB.projetTB.Notes.DTOs.NoteDTO;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -169,8 +171,6 @@ public class NotesService {
         noteRepository.save(note);
     }
 
-    // Must be changed, big security problem (it's there just for debugging
-    // purposes)
     public void takeDocuments(String secretCode) {
         System.out.println("the input password is: " + secretCode);
         // Fetch notes from the repository
@@ -185,8 +185,7 @@ public class NotesService {
         // Validate the secret code
         Note note = notes.get(0);
         if (!note.getSecretPassword().trim().equalsIgnoreCase(secretCode.trim()))
-            throw new IllegalArgumentException(
-                    "wrong password, the correct password is: " + note.getSecretPassword().trim());
+            throw new IllegalArgumentException("wrong password");
 
         // Mark the note as unavailable and save it
         note.setAvailable(false);
@@ -236,5 +235,50 @@ public class NotesService {
 
     private String generateUniqueFileName() {
         return UUID.randomUUID().toString();
+    }
+
+    public List<NoteDTO> getFavouriteDocuments(String userEmail) {
+        Users user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
+
+        return user.getFavouriteNotes().stream().map(NoteDTO::parseNoteToNoteDTO).collect(Collectors.toList());
+    }
+
+    public void addToFavouriteDocuments(String userEmail, Long noteId) {
+        Users user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
+
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new IllegalArgumentException("Note not found with id: " + noteId));
+
+        List<Note> favouriteNotes = user.getFavouriteNotes();
+
+        if (favouriteNotes.contains(note)) {
+            throw new RuntimeException("Note is already in favorites.");
+        }
+
+        favouriteNotes.add(note);
+        user.setFavouriteNotes(favouriteNotes);
+
+        userRepository.save(user);
+    }
+
+    public void removeFromFavouriteDocuments(String userEmail, Long noteId) {
+        Users user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
+
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new IllegalArgumentException("Note not found with id: " + noteId));
+
+        List<Note> favouriteNotes = user.getFavouriteNotes();
+
+        if (!favouriteNotes.contains(note)) {
+            throw new RuntimeException("Note is not in favorites.");
+        }
+
+        favouriteNotes.remove(note);
+        user.setFavouriteNotes(favouriteNotes);
+
+        userRepository.save(user);
     }
 }
