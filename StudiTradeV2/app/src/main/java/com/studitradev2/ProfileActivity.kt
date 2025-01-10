@@ -1,7 +1,7 @@
 package com.studitradev2
 
 import android.content.Context
-import android.content.SharedPreferences
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,31 +13,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.studitradev2.api.RetrofitInstance
 import com.studitradev2.models.UserDTO
 import com.studitradev2.ui.theme.StudiTradeV2Theme
-import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class ProfileActivity : ComponentActivity() {
-    private lateinit var sharedPreferences: SharedPreferences
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Initialiser les SharedPreferences
-        sharedPreferences = getSharedPreferences("UserProfilePrefs", Context.MODE_PRIVATE)
-
         setContent {
             StudiTradeV2Theme {
-                ProfileScreen(
-                    onBackClick = { finish() },
-                    sharedPreferences = sharedPreferences
-                )
+                ProfileScreen(onBackClick = { finish() })
             }
         }
     }
@@ -45,28 +37,39 @@ class ProfileActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences) {
-    // Variables d'état pour les données utilisateur
+fun ProfileScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
     var user by remember { mutableStateOf<UserDTO?>(null) }
     var errorMessage by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Charger les informations utilisateur au démarrage
+    // Charger les informations utilisateur
     LaunchedEffect(Unit) {
-        fetchUserInfo { fetchedUser, error ->
-            if (fetchedUser != null) {
+        fetchUserInfo(
+            context = context,
+            onSuccess = { fetchedUser ->
                 user = fetchedUser
                 errorMessage = ""
-            } else {
-                errorMessage = error ?: "Failed to load user information"
+                isLoading = false
+            },
+            onError = { error ->
+                errorMessage = error
+                isLoading = false
             }
-        }
+        )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Profile", color = Color.White, fontSize = 20.sp) },
+                title = {
+                    Text(
+                        text = "Profile",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold, // Titre en gras
+                        fontSize = 20.sp
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -80,84 +83,74 @@ fun ProfileScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences)
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
+            contentAlignment = Alignment.Center
         ) {
-            if (user != null) {
-                // Afficher les informations utilisateur
-                Text(text = "Name: ${user!!.username}", fontSize = 18.sp, color = Color.Black)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Email: ${user!!.email}", fontSize = 18.sp, color = Color.Black)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Phone: ${user!!.phoneNumber}", fontSize = 18.sp, color = Color.Black)
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Vérifier l'utilisateur
-                Button(
-                    onClick = {
-                        verifyUser { isVerified, error ->
-                            if (isVerified) {
-                                scope.launch {
-                                    SnackbarHostState().showSnackbar("User verified successfully")
-                                }
-                            } else {
-                                errorMessage = error ?: "Failed to verify user"
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
-                ) {
-                    Text(text = "Verify User", color = Color.White)
+            when {
+                isLoading -> {
+                    CircularProgressIndicator()
                 }
-            } else if (errorMessage.isNotEmpty()) {
-                // Afficher le message d'erreur si les données échouent à se charger
-                Text(text = errorMessage, color = Color.Red, fontSize = 16.sp)
-            } else {
-                // Afficher un indicateur de chargement
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                errorMessage.isNotEmpty() -> {
+                    Text(text = errorMessage, color = Color.Red, fontSize = 16.sp)
+                }
+                user != null -> {
+                    ProfileContent(user = user!!)
+                }
             }
         }
     }
 }
 
-fun fetchUserInfo(callback: (UserDTO?, String?) -> Unit) {
-    val call = RetrofitInstance.userApi.getUserInfo()
+@Composable
+fun ProfileContent(user: UserDTO) {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(text = "Username: ${user.username}", fontSize = 20.sp, color = Color.Black)
+        Text(text = "Email: ${user.email}", fontSize = 18.sp, color = Color.Gray)
+        Text(text = "Phone: ${user.phoneNumber}", fontSize = 18.sp, color = Color.Gray)
+
+        // Vérification des détails de vérification
+        user.verificationDetails?.let { details ->
+            Text(
+                text = if (details.isEmailVerified) "Email Verified" else "Email Not Verified",
+                fontSize = 16.sp,
+                color = if (details.isEmailVerified) Color.Green else Color.Red
+            )
+            Text(
+                text = if (details.isPhoneNumberVerified) "Phone Verified" else "Phone Not Verified",
+                fontSize = 16.sp,
+                color = if (details.isPhoneNumberVerified) Color.Green else Color.Red
+            )
+        }
+    }
+}
+
+fun fetchUserInfo(context: Context, onSuccess: (UserDTO) -> Unit, onError: (String) -> Unit) {
+    val userApi = RetrofitInstance.getUserApi(context)
+    val call = userApi.getUserInfo()
+
     call.enqueue(object : Callback<UserDTO> {
         override fun onResponse(call: Call<UserDTO>, response: Response<UserDTO>) {
             if (response.isSuccessful) {
-                callback(response.body(), null)
+                response.body()?.let(onSuccess) ?: onError("No user data found")
+            } else if (response.code() == 401) {
+                onError("Session expired. Please log in again.")
+                // Redirection si nécessaire
+                context.startActivity(Intent(context, LoginActivity::class.java))
             } else {
-                callback(null, "Failed to load user info: ${response.code()}")
+                onError("Failed to load user info: ${response.code()}")
             }
         }
 
         override fun onFailure(call: Call<UserDTO>, t: Throwable) {
-            callback(null, "Error: ${t.localizedMessage}")
-        }
-    })
-}
-
-fun verifyUser(callback: (Boolean, String?) -> Unit) {
-    val call = RetrofitInstance.userApi.verifyUser()
-    call.enqueue(object : Callback<Map<String, Boolean>> {
-        override fun onResponse(
-            call: Call<Map<String, Boolean>>,
-            response: Response<Map<String, Boolean>>
-        ) {
-            if (response.isSuccessful && response.body()?.get("success") == true) {
-                callback(true, null)
-            } else {
-                callback(false, "Verification failed: ${response.message()}")
-            }
-        }
-
-        override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
-            callback(false, "Error: ${t.localizedMessage}")
+            onError("Error: ${t.localizedMessage}")
         }
     })
 }

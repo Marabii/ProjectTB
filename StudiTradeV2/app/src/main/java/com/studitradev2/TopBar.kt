@@ -34,18 +34,6 @@ fun TopBar(context: Context) {
         },
         actions = {
             Row {
-                IconButton(onClick = {
-                    // Navigue vers SettingsActivity
-                    val intent = Intent(context, SettingsActivity::class.java)
-                    context.startActivity(intent)
-                }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_action_settings),
-                        contentDescription = stringResource(R.string.app_go_settings),
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
                     // Navigue vers ProfileActivity

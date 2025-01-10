@@ -1,5 +1,7 @@
 package com.studitradev2
 
+import android.content.ContentResolver
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -12,16 +14,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.studitradev2.ui.theme.StudiTradeV2Theme
+import java.io.File
 
 class SellActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,16 +56,17 @@ fun SellFilesScreen(
     var description by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
 
-    // Gestionnaire de sélection de fichiers
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             fileUri = uri
-            fileName = uri.lastPathSegment ?: "Unnamed file"
-            onFileSelected(uri) // Passe l'URI sélectionné à l'activité
+            fileName = uri.path?.split("/")?.last() ?: "Unnamed file"
+            onFileSelected(uri)
         } else {
             fileName = "No file selected"
         }
     }
+
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -70,15 +76,12 @@ fun SellFilesScreen(
                         text = "Sell Your Files",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp)
+                        fontSize = 20.sp
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
@@ -92,27 +95,24 @@ fun SellFilesScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Champ pour uploader un fichier
+            // File selector
             Text(text = "Upload File", style = MaterialTheme.typography.labelLarge)
-            OutlinedTextField(
-                value = fileName,
-                onValueChange = {},
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        launcher.launch("*/*") // Ouvre le sélecteur pour tous types de fichiers
-                    },
-                readOnly = true,
-                placeholder = { Text("Upload a file") },
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Upload Icon"
-                    )
-                }
-            )
+                    .clickable { launcher.launch(arrayOf("*/*")) }
+                    .padding(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = fileName,
+                    onValueChange = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    placeholder = { Text("Click to upload a file") },
+                )
+            }
 
-            // Champ pour le titre
+            // Title field
             Text(text = "Title", style = MaterialTheme.typography.labelLarge)
             OutlinedTextField(
                 value = title,
@@ -121,7 +121,7 @@ fun SellFilesScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Champ pour la description
+            // Description field
             Text(text = "Description", style = MaterialTheme.typography.labelLarge)
             OutlinedTextField(
                 value = description,
@@ -133,7 +133,7 @@ fun SellFilesScreen(
                 maxLines = 4
             )
 
-            // Champ pour le prix
+            // Price field
             Text(text = "Price (€)", style = MaterialTheme.typography.labelLarge)
             OutlinedTextField(
                 value = price,
@@ -143,12 +143,24 @@ fun SellFilesScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            Spacer(modifier = Modifier.weight(1f)) // Espace pour pousser le bouton en bas
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Bouton "Upload for Sale"
+            // Upload button
             Button(
                 onClick = {
-                    // TODO: Ajouter une logique pour envoyer les données sur un serveur
+                    if (fileUri != null) {
+                        Toast.makeText(
+                            context,
+                            "File uploaded successfully: $fileName",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Please select a file first",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,5 +170,20 @@ fun SellFilesScreen(
                 Text(text = "Upload for Sale", color = Color.White, fontSize = 18.sp)
             }
         }
+    }
+}
+
+fun getUri(uri: Uri, context: Context): Uri {
+    return if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
+        val cr = context.contentResolver
+        val file = File.createTempFile("tempFile", null, context.cacheDir)
+        cr.openInputStream(uri)?.use { input ->
+            file.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        Uri.fromFile(file)
+    } else {
+        uri
     }
 }

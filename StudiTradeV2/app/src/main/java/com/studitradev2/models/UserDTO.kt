@@ -5,5 +5,5 @@ data class UserDTO(
     val username: String,
     val phoneNumber: String,
     val email: String,
-    val verificationDetails: VerificationDetails
+    val verificationDetails: VerificationDetails? = null
 )

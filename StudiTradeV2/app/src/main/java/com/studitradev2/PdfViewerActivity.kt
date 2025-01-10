@@ -2,8 +2,8 @@ package com.studitradev2
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import com.rajat.pdfviewer.PdfViewerActivity
+import com.rajat.pdfviewer.util.saveTo
 
 class PdfViewerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,11 +19,11 @@ class PdfViewerActivity : ComponentActivity() {
                 context = this,
                 pdfUrl = pdfUrl,
                 pdfTitle = pdfTitle,
-                saveTo = PdfViewerActivity.SaveTo.ASK_EVERYTIME,
-                enableDownload = true
+                enableDownload = false,
+                saveTo = saveTo.ASK_EVERYTIME
             )
         } else {
-            // Terminer l'activité si les paramètres sont manquants
+            println("PDF URL or title is missing!")
             finish()
         }
     }

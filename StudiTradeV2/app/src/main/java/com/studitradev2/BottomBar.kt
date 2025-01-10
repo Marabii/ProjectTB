@@ -56,16 +56,16 @@ fun BottomBar(
         NavigationBarItem(
             icon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_action_favorites),
-                    contentDescription = stringResource(R.string.app_go_favorites),
+                    painter = painterResource(id = R.drawable.ic_action_settings),
+                    contentDescription = stringResource(R.string.app_go_settings),
                     tint = Color.White,
-                    modifier = Modifier.size(34.dp)
+                    modifier = Modifier.size(30.dp)
                 )
             },
             selected = false,
             onClick = {
                 // Naviguer vers FavoritesActivity
-                val intent = Intent(context, FavoritesActivity::class.java)
+                val intent = Intent(context, SettingsActivity::class.java)
                 context.startActivity(intent)
             }
         )

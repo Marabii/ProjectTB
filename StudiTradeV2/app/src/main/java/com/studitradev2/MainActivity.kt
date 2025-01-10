@@ -1,5 +1,6 @@
 package com.studitradev2
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,8 +9,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -38,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NotesScreen() {
-    val context = LocalContext.current // Récupère le contexte pour les composants TopBar et BottomBar
+    val context = LocalContext.current
     var notes by remember { mutableStateOf<List<NoteDTO>>(emptyList()) }
     var errorMessage by remember { mutableStateOf("") }
 
@@ -63,8 +62,8 @@ fun NotesScreen() {
     }
 
     Scaffold(
-        topBar = { TopBar(context = context) }, // Utilisation de votre TopBar personnalisée
-        bottomBar = { BottomBar(context = context) } // Utilisation de votre BottomBar personnalisée
+        topBar = { TopBar(context = context) },
+        bottomBar = { BottomBar(context = context) }
     ) { innerPadding ->
         if (errorMessage.isNotEmpty()) {
             Text(
@@ -89,12 +88,20 @@ fun NotesScreen() {
 
 @Composable
 fun NoteCard(note: NoteDTO) {
+    val context = LocalContext.current
+
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { /* Action sur le clic du document */ },
+            .clickable {
+                val intent = Intent(context, PdfViewerActivity::class.java).apply {
+                    putExtra("pdfUrl", note.demoFile?.fileUrl)
+                    putExtra("pdfTitle", note.title)
+                }
+                context.startActivity(intent)
+            },
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -122,13 +129,17 @@ fun NoteCard(note: NoteDTO) {
                 color = Color.Gray
             )
             Spacer(modifier = Modifier.height(16.dp))
+            // Bouton "Buy"
             Button(
-                onClick = { /* Gérer le bouton Favoris */ },
+                onClick = {
+                    val buyIntent = Intent(Intent.ACTION_VIEW).apply {
+                        data = android.net.Uri.parse("http://localhost:3000/")
+                    }
+                    context.startActivity(buyIntent)
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
-                Icon(Icons.Filled.Favorite, contentDescription = "Favorite", tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Favorite", color = Color.White)
+                Text("Buy", color = Color.White)
             }
         }
     }
