@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -43,9 +42,6 @@ class SettingsActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences) {
-    // Charger les données sauvegardées
-    var email by remember { mutableStateOf(sharedPreferences.getString("email", "lucas@emse.fr") ?: "") }
-    var password by remember { mutableStateOf(sharedPreferences.getString("password", "1234") ?: "") }
     var emailNotificationsEnabled by remember { mutableStateOf(sharedPreferences.getBoolean("emailNotifications", false)) }
     var pushNotificationsEnabled by remember { mutableStateOf(sharedPreferences.getBoolean("pushNotifications", false)) }
     var publicProfileEnabled by remember { mutableStateOf(sharedPreferences.getBoolean("publicProfile", false)) }
@@ -89,22 +85,6 @@ fun SettingsScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Section Account
-                Text(
-                    text = "Account",
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp, color = Color.Black),
-                    modifier = Modifier.align(Alignment.Start)
-                )
-                CustomTextField(
-                    label = "Email",
-                    value = email,
-                    onValueChange = { email = it }
-                )
-                CustomTextField(
-                    label = "Password",
-                    value = password,
-                    onValueChange = { password = it }
-                )
 
                 // Section Notifications
                 Text(
@@ -141,8 +121,6 @@ fun SettingsScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences
                 onClick = {
                     // Sauvegarder les données dans SharedPreferences
                     sharedPreferences.edit().apply {
-                        putString("email", email)
-                        putString("password", password)
                         putBoolean("emailNotifications", emailNotificationsEnabled)
                         putBoolean("pushNotifications", pushNotificationsEnabled)
                         putBoolean("publicProfile", publicProfileEnabled)
@@ -165,24 +143,6 @@ fun SettingsScreen(onBackClick: () -> Unit, sharedPreferences: SharedPreferences
     }
 }
 
-@Composable
-fun CustomTextField(label: String, value: String, onValueChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Gray,
-            cursorColor = Color.Black
-        ),
-        keyboardOptions = KeyboardOptions.Default
-    )
-}
 
 @Composable
 fun SettingsSwitchItem(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {

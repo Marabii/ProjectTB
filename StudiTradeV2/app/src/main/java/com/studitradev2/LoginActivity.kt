@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +40,7 @@ class LoginActivity : ComponentActivity() {
                 LoginRegisterScreen(
                     onLoginSuccess = { token ->
                         // Sauvegarder le token JWT et naviguer vers MainActivity
-                        sharedPreferences.edit().putString("jwt_token", token).apply()
+                        sharedPreferences.edit().putString("jwtToken", token).apply()
                         val intent = Intent(this, MainActivity::class.java)
                         startActivity(intent)
                         finish()
@@ -128,10 +129,13 @@ fun LoginScreenContent(onLoginSuccess: (String) -> Unit, onToggleMode: () -> Uni
                     }
                 })
             },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
             enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
+
+
         ) {
             Text(text = if (isLoading) "Logging in..." else "Login")
         }
@@ -185,6 +189,7 @@ fun RegisterScreenContent(onRegisterSuccess: () -> Unit, onToggleMode: () -> Uni
                     }
                 })
             },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
             enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()

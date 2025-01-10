@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,7 +24,6 @@ import com.studitradev2.ui.theme.StudiTradeV2Theme
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,9 +36,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen() {
+    val context = LocalContext.current // Récupère le contexte pour les composants TopBar et BottomBar
     var notes by remember { mutableStateOf<List<NoteDTO>>(emptyList()) }
     var errorMessage by remember { mutableStateOf("") }
 
@@ -63,12 +63,8 @@ fun NotesScreen() {
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Available Notes", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
-            )
-        }
+        topBar = { TopBar(context = context) }, // Utilisation de votre TopBar personnalisée
+        bottomBar = { BottomBar(context = context) } // Utilisation de votre BottomBar personnalisée
     ) { innerPadding ->
         if (errorMessage.isNotEmpty()) {
             Text(
@@ -90,7 +86,6 @@ fun NotesScreen() {
         }
     }
 }
-
 
 @Composable
 fun NoteCard(note: NoteDTO) {

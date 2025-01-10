@@ -52,29 +52,14 @@ fun BottomBar(
                 context.startActivity(intent)
             }
         )
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_action_purshased),
-                    contentDescription = stringResource(R.string.app_go_purshased),
-                    tint = Color.White,
-                    modifier = Modifier.size(30.dp)
-                )
-            },
-            selected = false,
-            onClick = {
-                // Naviguer vers PurchasedActivity
-                val intent = Intent(context, PurchasedActivity::class.java)
-                context.startActivity(intent)
-            }
-        )
+
         NavigationBarItem(
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_action_favorites),
                     contentDescription = stringResource(R.string.app_go_favorites),
                     tint = Color.White,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(34.dp)
                 )
             },
             selected = false,
