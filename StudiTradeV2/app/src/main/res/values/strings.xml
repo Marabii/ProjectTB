@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">StudiTrade</string>
+    <string name="app_go_user_profile">Profile</string>
+    <string name="app_go_settings">Settings</string>
+    <string name="app_go_home">Home</string>
+    <string name="app_go_favorites">My favorites</string>
+    <string name="app_go_sell">Sell files</string>
+    <string name="app_go_purshased">My purshased files</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_favorites">FavoritesActivity</string>
+    <string name="title_activity_sell">SellActivity</string>
+    <string name="title_activity_purshased">PurshasedActivity</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="title_activity_profile">ProfileActivity</string>
+    <string name="title_activity_sell_files">SellFilesActivity</string>
+    <string name="title_activity_pdf_viewer">PdfViewerActivity</string>
+</resources>

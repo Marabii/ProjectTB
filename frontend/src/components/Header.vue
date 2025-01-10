@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { Settings, User } from 'lucide-vue-next'
+import { User } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 </script>
 
@@ -24,7 +24,6 @@ import { RouterLink } from 'vue-router'
       </li>
     </ul>
     <div class="flex items-center space-x-3">
-      <Settings />
       <router-link to="/auth-page"><User /></router-link>
     </div>
   </header>
