@@ -223,9 +223,7 @@ For any issues or inquiries regarding the setup and usage of StudiTrade, please 
 
 ## Authors
 
-- **Lucas CHATEAU**
 - **Hamza DADDA**
-- **Charles BOULLON**
 
 
 # License
