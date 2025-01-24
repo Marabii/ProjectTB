@@ -186,7 +186,7 @@ StudiTrade's embedded system ensures the secure physical delivery of non-digital
 - Clone the `Arduino/sketch_dec26a` directory from the GitHub repository into the [Arduino IDE](https://www.arduino.cc/en/software).
 
 ```bash
-git clone https://github.com/your-repo/Arduino/sketch_dec26a
+git clone https://github.com/Marabii/ProjectTB/Arduino/sketch_dec26a
 ```
 
 3. **Install Libraries:**
