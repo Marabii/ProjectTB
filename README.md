@@ -221,11 +221,6 @@ For any issues or inquiries regarding the setup and usage of StudiTrade, please 
 
 - **Email:** [minehamza97@gmail.com](mailto:minehamza97@gmail.com)
 
-## Authors
-
-- **Hamza DADDA**
-
-
 # License
 
 
